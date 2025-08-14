@@ -11,8 +11,8 @@ export const authMiddleware = (req: Request, res: Response, next: NextFunction) 
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET as string);
-    // Simpan hasil decode ke req.use r, salah satu contohnya nanti id user akan diambil di getProfile (dari authController)
-    // Gunanya untuk keamanan, dibanding langsung req.body
+    // sosse (8/12): Simpan hasil decode ke req.use r contohnya nanti userId akan diambil di getProfile (getProfile yang ada di authController.ts)
+    // sosse (8/12): Gunanya untuk keamanan, dibanding langsung req.body untuk ambil userId nya
     (req as any).user = decoded;
     next();
   } catch (err) {
