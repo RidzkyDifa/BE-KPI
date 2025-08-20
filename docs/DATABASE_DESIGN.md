@@ -191,11 +191,77 @@ Perusahaan ingin menilai **karyawan Budi Santoso** untuk periode **Januari 2025*
 
 ## 🔄 Cara Kerja Sistem
 
-1. **Budi login** dengan username "budi123"
-2. Sistem mengenali bahwa ini adalah karyawan dengan ID 1
-3. Sistem mengambil data karyawan: divisi IT, posisi Software Engineer
-4. Sistem menampilkan nilai KPI untuk periode Januari 2025
-5. Sistem menggabungkan semua data untuk membuat laporan lengkap
+### Langkah 1: Login Karyawan
+**Budi masukkan username "budi123"**
+- Sistem cek di tabel **User** → ditemukan username "budi123" dengan ID = 1
+- Sistem lihat field `employeeId = 1` → berarti Budi adalah karyawan dengan ID 1
+- ✅ Login berhasil, sistem tahu ini adalah karyawan Budi
+
+### Langkah 2: Ambil Data Profil Karyawan  
+**Sistem baca tabel Employee dengan ID = 1**
+- Ditemukan data:
+  - Nomor Pegawai: "EMP001"
+  - Nomor PNOS: "PNOS-2025-01" 
+  - Position ID: 1
+  - Division ID: 1
+  - Tanggal Masuk: 15 Juni 2023
+
+### Langkah 3: Ambil Data Jabatan dan Divisi
+**Sistem gabungkan dengan tabel Position dan Division**
+
+Dari tabel **Position** (ID = 1):
+- Nama Jabatan: "Software Engineer"
+- Deskripsi: "Developer aplikasi internal perusahaan"
+
+Dari tabel **Division** (ID = 1):  
+- Nama Divisi: "IT"
+- Deskripsi: "Divisi Teknologi Informasi"
+- Bobot: 3
+
+### Langkah 4: Ambil Nilai KPI untuk Periode Tertentu
+**Sistem cari di tabel EmployeeKPI**
+- Filter: `employeeId = 1` DAN `period = Januari 2025`
+- Ditemukan 3 record nilai KPI:
+
+| KPI ID | Score | Periode |
+|--------|-------|---------|
+| 1 | 95 | Jan 2025 |
+| 2 | 88 | Jan 2025 |
+| 3 | 90 | Jan 2025 |
+
+### Langkah 5: Ambil Nama KPI
+**Sistem gabungkan dengan tabel KPI**
+- KPI ID 1 → "Kehadiran"  
+- KPI ID 2 → "Kualitas Pekerjaan"
+- KPI ID 3 → "Target Proyek"
+
+### Langkah 6: Tampilkan Hasil Akhir
+**Sistem gabungkan semua data menjadi laporan lengkap**
+
+```
+👤 PROFIL KARYAWAN
+Nama: Budi Santoso
+Nomor Pegawai: EMP001
+Divisi: IT (Divisi Teknologi Informasi)
+Jabatan: Software Engineer
+Bergabung: 15 Juni 2023
+
+📊 NILAI KPI - JANUARI 2025
+• Kehadiran: 95/100
+• Kualitas Pekerjaan: 88/100  
+• Target Proyek: 90/100
+
+📈 RATA-RATA: 91/100
+```
+
+### 🔍 Yang Terjadi di Database:
+1. **Query User** → Dapat employeeId
+2. **Query Employee** → Dapat positionId & divisionId  
+3. **Query Position** → Dapat nama jabatan
+4. **Query Division** → Dapat nama divisi
+5. **Query EmployeeKPI** → Dapat daftar nilai KPI
+6. **Query KPI** → Dapat nama setiap KPI
+7. **Gabungkan semua** → Tampilkan laporan
 
 ## 📊 Penjelasan Per Tabel
 
