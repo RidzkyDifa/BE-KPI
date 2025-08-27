@@ -6,11 +6,18 @@ export const createDivision = async (req: Request, res: Response) => {
     const { name, description, weight } = req.body;
 
     // Validasi input
-    if (!name || name.trim().length < 3) {
+    if (!name || name.trim().length < 2) {
       return res
         .status(400)
-        .json({ message: "Name must be at least 3 characters" });
+        .json({ message: "Name must be at least 2 characters" });
     }
+
+    // Validasi nama sudah ada
+    if (await prisma.division.findUnique({ where: { name } })) {
+      return res.status(400).json({ message: "Division name already exists" });
+    }
+
+    // Validasi weight harus positif
     if (weight && weight < 0) {
       return res
         .status(400)
@@ -38,16 +45,15 @@ export const createDivision = async (req: Request, res: Response) => {
 
 export const getAllDivisions = async (req: Request, res: Response) => {
   try {
+    // Mengambil semua divisi beserta karyawan terkait
     const divisions = await prisma.division.findMany({
-      include: { employees: true }, // optional
+      include: { employees: true },
     });
-    res
-      .status(200)
-      .json({
-        message: "Divisions retrieved successfully",
-        code: 200,
-        divisions,
-      });
+    res.status(200).json({
+      message: "Divisions retrieved successfully",
+      code: 200,
+      divisions,
+    });
   } catch (error) {
     console.error(error);
     res.status(500).json({
@@ -64,19 +70,17 @@ export const getDivisionById = async (req: Request, res: Response) => {
 
     const division = await prisma.division.findUnique({
       where: { id },
-      include: { employees: true }, // optional
+      include: { employees: true },
     });
 
     if (!division)
       return res.status(404).json({ message: "Division not found", code: 404 });
 
-    res
-      .status(200)
-      .json({
-        message: "Division retrieved successfully",
-        code: 200,
-        division,
-      });
+    res.status(200).json({
+      message: "Division retrieved successfully",
+      code: 200,
+      division,
+    });
   } catch (error) {
     console.error(error);
     res.status(500).json({
@@ -107,13 +111,11 @@ export const updateDivision = async (req: Request, res: Response) => {
       },
     });
 
-    res
-      .status(200)
-      .json({
-        message: "Division updated successfully",
-        code: 200,
-        division: updatedDivision,
-      });
+    res.status(200).json({
+      message: "Division updated successfully",
+      code: 200,
+      division: updatedDivision,
+    });
   } catch (error) {
     console.error(error);
     res.status(500).json({
