@@ -7,37 +7,115 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// ===== TABEL AUTHENTICATION =====
 model User {
-  id         String       @id @default(uuid())
+  id         String    @id @default(uuid())
   name       String
-  email      String       @unique
+  email      String    @unique
   password   String
-  role       Role         @default(USER)
-  createdAt  DateTime     @default(now())
-  updatedAt  DateTime     @updatedAt
-  divisiId   String?
-  divisi     Divisi?      @relation(fields: [divisiId], references: [id])
-  matriksKpi MatriksKPI[]
-
+  role       Role      @default(USER)
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  
+  // Email verification
   verificationToken        String?
-  verificationTokenExpires DateTime? // waktu expired token verifikasi
+  verificationTokenExpires DateTime?
   verified                 Boolean   @default(false)
-}
+  
+  // Relasi ke Employee (optional - tidak semua user harus punya data employee)
+  employee   Employee? @relation(fields: [employeeId], references: [id])
+  employeeId String?   @unique
 
-model Divisi {
-  id   String @id @default(uuid())
-  nama String
-  User User[]
+  @@map("users")
 }
-
-model MatriksKPI {
-  id     String @id @default(uuid())
-  UserId String
-  User   User   @relation(fields: [UserId], references: [id])
-  nilai  Float? // dari Int jadi Float, untuk pecahan
-}
-
+// CEK ULANG SCEHMAAA NYAAAA
 enum Role {
   USER
   ADMIN
+}
+
+// ===== TABEL MASTER DATA =====
+model Division {
+  id          String     @id @default(uuid())
+  name        String
+  description String?
+  weight      Int?
+  employees   Employee[]
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  @@map("divisions")
+}
+
+model Position {
+  id          String     @id @default(uuid())
+  name        String
+  description String?
+  employees   Employee[]
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  @@map("positions")
+}
+
+model KPI {
+  id           String        @id @default(uuid())
+  name         String
+  employeeKpis EmployeeKPI[]
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  @@map("kpis")
+}
+
+// ===== TABEL DATA KARYAWAN =====
+model Employee {
+  id             String        @id @default(uuid())
+  employeeNumber String?       @unique  // nomor/ID karyawan perusahaan
+  pnosNumber     String?       // nomor PNOS (optional)
+  dateJoined     DateTime?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  
+  // Relasi ke Position dan Division
+  position   Position? @relation(fields: [positionId], references: [id])
+  positionId String?
+  division   Division? @relation(fields: [divisionId], references: [id])
+  divisionId String?
+  
+  // Relasi balik ke User (optional)
+  user User?
+  
+  // Relasi ke EmployeeKPI
+  employeeKpis EmployeeKPI[]
+
+  @@map("employees")
+}
+
+// ===== TABEL PENILAIAN KPI =====
+model EmployeeKPI {
+  id         String   @id @default(uuid())
+  score      Float    // nilai KPI (support decimal untuk perhitungan yang presisi)
+  period     DateTime // periode penilaian (biasanya bulan)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  
+  // Relasi ke Employee dan KPI
+  employee   Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  employeeId String
+  kpi        KPI      @relation(fields: [kpiId], references: [id])
+  kpiId      String
+  
+  // Audit trail - siapa yang input/update nilai
+  createdBy  String?  // bisa link ke User.id
+  updatedBy  String?  // bisa link ke User.id
+  
+  // Indexing untuk performa
+  @@index([employeeId])
+  @@index([kpiId])
+  @@index([period])
+  
+  // Constraint: tidak boleh ada duplikat penilaian di periode yang sama
+  @@unique([employeeId, kpiId, period])
+  @@map("employee_kpis")
 }

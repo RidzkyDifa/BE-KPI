@@ -1,4 +1,4 @@
-import bcrypt from "bcrypt";
+import bcrypt from "bcryptjs";
 import prisma from "../utils/prisma";
 import jwt from "jsonwebtoken";
 import {
@@ -88,7 +88,6 @@ export const register = async (req: Request, res: Response) => {
         verified: true,
         createdAt: true,
         updatedAt: true,
-        divisi: true,
       }
     });
 
@@ -327,7 +326,12 @@ export const login = async (req: Request, res: Response) => {
     const user = await prisma.user.findUnique({ 
       where: { email },
       include: {
-        divisi: true
+        employee: {
+          include: {
+            division: true,
+            position: true
+          }
+        }
       }
     });
     
@@ -434,15 +438,13 @@ export const getProfile = async (req: Request, res: Response) => {
 
     const user = await prisma.user.findUnique({
       where: { id: userId },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        verified: true,
-        createdAt: true,
-        updatedAt: true,
-        divisi: true,
-        // matriksKpi: true, // sosse(8/13) Uncomment jika perlu data KPI di profil
+      include: {
+        employee: {
+          include: {
+            division: true,
+            position: true
+          }
+        }
       }
     });
 

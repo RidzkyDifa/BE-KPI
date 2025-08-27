@@ -14,6 +14,8 @@ export const authMiddleware = (req: Request, res: Response, next: NextFunction) 
     // sosse (8/12): Simpan hasil decode ke req.use r contohnya nanti userId akan diambil di getProfile (getProfile yang ada di authController.ts)
     // sosse (8/12): Gunanya untuk keamanan, dibanding langsung req.body untuk ambil userId nya
     (req as any).user = decoded;
+
+    // fungsi next() adalah lanjut ke controller jika berhasil melewati middleware ini sesuai yang ada di authRoutes
     next();
   } catch (err) {
     return res.status(401).json({ message: "Invalid or expired token" });
