@@ -1,6 +1,94 @@
 import { Request, Response } from "express";
 import prisma from "../utils/prisma";
 
+export const createParamsKPI = async (req: Request, res: Response) => {
+  try {
+    const { name } = req.body;
+
+    const errors: { [key: string]: string[] } = {};
+
+    // validasi
+    if (!name) {
+      errors.name = ["Name is required"];
+    }
+    if (Object.keys(errors).length > 0) {
+      return res.status(400).json({ errors });
+    }
+
+    // Input
+    const newKPI = await prisma.kPI.create({
+      data: {
+        name,
+      },
+    });
+
+    return res.status(201).json(newKPI);
+  } catch (error: any) {
+    console.error("Error creating KPI:", error);
+    res
+      .status(500)
+      .json({ error: "Internal server error", detail: error.message });
+  }
+};
+
+export const updateParamsKPI = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const { name } = req.body;
+
+    const errors: { [key: string]: string[] } = {};
+    // validasi
+    if (!name) {
+      errors.name = ["Name is required"];
+    }
+    if (Object.keys(errors).length > 0) {
+      return res.status(400).json({ errors });
+    }
+
+    // Input
+    const updatedKPI = await prisma.kPI.update({
+      where: { id },
+      data: {
+        name,
+      },
+    });
+    return res.status(200).json(updatedKPI);
+  } catch (error: any) {
+    console.error("Error updating KPI:", error);
+    res
+      .status(500)
+      .json({ error: "Internal server error", detail: error.message });
+  }
+};
+
+export const getAllParamsKPI = async (req: Request, res: Response) => {
+  try {
+    const kpis = await prisma.kPI.findMany();
+    res.json(kpis);
+  } catch (error: any) {
+    console.error("Error fetching KPIs:", error);
+    res
+      .status(500)
+      .json({ error: "Internal server error", detail: error.message });
+  }
+};
+
+export const deleteParamsKPI = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const existing = await prisma.kPI.findUnique({ where: { id } });
+    if (!existing) {
+      return res.status(400).json({ error: "KPI not found" });
+    }
+    await prisma.kPI.delete({ where: { id } });
+    res.json({ message: "KPI deleted successfully" });
+  } catch (error: any) {
+    console.error("Error deleting KPI:", error);
+    res
+      .status(500)
+      .json({ error: "Internal server error", detail: error.message });
+  }
+};
 export const createKPI = async (req: Request, res: Response) => {
   try {
     const { employeeId, kpiId, weight, target, actual, period, createdBy } =
