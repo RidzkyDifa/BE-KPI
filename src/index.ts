@@ -3,6 +3,7 @@ import cors from "cors";
 import authRoutes from "./routes/authRoutes";
 import employeeRoutes from "./routes/employeeRoutes";
 import divisionRoutes from "./routes/divisionRoutes";
+import kpiRoutes from "./routes/kpiRoutes";
 import dotenv from "dotenv";
 
 dotenv.config();
@@ -14,6 +15,7 @@ app.use(express.json());
 app.use("/api/auth", authRoutes); // Autentikasi User
 app.use("/api/employees", employeeRoutes); // CRUD Karyawan
 app.use("/api/divisions", divisionRoutes); // CRUD Divisi
+app.use("/api/kpi", kpiRoutes); // CRUD KPI
 
 // Master data routes ( Belum dibuat )
 // app.use("/api/positions", positionRoutes);
