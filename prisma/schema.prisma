@@ -26,12 +26,32 @@ model User {
   employee   Employee? @relation(fields: [employeeId], references: [id])
   employeeId String?   @unique
 
+  notifications Notification[]
+
   @@map("users")
 }
-// CEK ULANG SCEHMAAA NYAAAA
+
 enum Role {
   USER
   ADMIN
+}
+
+model Notification {
+  id          String    @id @default(uuid())
+  title       String    // Judul notifikasi
+  message     String    // Isi pesan
+  isRead      Boolean   @default(false)
+  readAt      DateTime?
+  
+  // Penerima notifikasi
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  createdAt   DateTime  @default(now())
+  
+  @@index([userId])
+  @@index([isRead])
+  @@map("notifications")
 }
 
 // ===== TABEL MASTER DATA =====
