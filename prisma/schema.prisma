@@ -94,11 +94,15 @@ model Employee {
 
 // ===== TABEL PENILAIAN KPI =====
 model EmployeeKPI {
-  id         String   @id @default(uuid())
-  score      Float    // nilai KPI (support decimal untuk perhitungan yang presisi)
-  period     DateTime // periode penilaian (biasanya bulan)
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  id          String   @id @default(uuid())
+  weight      Float // bobot KPI (%)
+  target      Float // target yang ditetapkan
+  actual      Float // realisasi (pencapaian nyata)
+  achievement Float // nilai akhir (weight * score )
+  score       Float    // nilai KPI (persentase (actual / target * 100))
+  period      DateTime // periode penilaian (biasanya bulan)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
   
   // Relasi ke Employee dan KPI
   employee   Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
