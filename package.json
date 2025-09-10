@@ -33,6 +33,7 @@
     "typescript": "^5.9.2"
   },
   "prisma": {
-    "seed": "ts-node prisma/seed.ts"
+    "seed": "ts-node prisma/seed.ts",
+    "seed2": "ts-node prisma/seed2.ts"
   }
 }
