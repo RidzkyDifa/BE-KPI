@@ -133,12 +133,12 @@ async function main() {
 
   // Employee 1 - HR Manager
   const hrUser = await prisma.user.upsert({
-    where: { email: "sarah.johnson@company.com" },
+    where: { email: "andi.dea1@company.com" },
     update: {},
     create: {
       id: "hr-user",
-      name: "Sarah Johnson",
-      email: "sarah.johnson@company.com",
+      name: "Andi Dea1",
+      email: "andi.dea1@company.com",
       password: await bcrypt.hash("password123", 10),
       role: "USER",
       verified: true,
@@ -166,12 +166,12 @@ async function main() {
 
   // Employee 2 - IT Staff
   const itUser = await prisma.user.upsert({
-    where: { email: "john.doe@company.com" },
+    where: { email: "andi.dea2@company.com" },
     update: {},
     create: {
       id: "it-user",
-      name: "John Doe",
-      email: "john.doe@company.com",
+      name: "Andi Dea2",
+      email: "andi.dea2@company.com",
       password: await bcrypt.hash("password123", 10),
       role: "USER",
       verified: true,
@@ -198,12 +198,12 @@ async function main() {
 
   // Employee 3 - Finance Staff
   const financeUser = await prisma.user.upsert({
-    where: { email: "alice.smith@company.com" },
+    where: { email: "andi.dea3@company.com" },
     update: {},
     create: {
       id: "finance-user",
-      name: "Alice Smith",
-      email: "alice.smith@company.com",
+      name: "Andi Dea3",
+      email: "andi.dea3@company.com",
       password: await bcrypt.hash("password123", 10),
       role: "USER",
       verified: true,
@@ -230,12 +230,12 @@ async function main() {
 
   // Employee 4 - Marketing Manager
   const marketingUser = await prisma.user.upsert({
-    where: { email: "bob.wilson@company.com" },
+    where: { email: "andi.dea4@company.com" },
     update: {},
     create: {
       id: "marketing-user",
-      name: "Bob Wilson",
-      email: "bob.wilson@company.com",
+      name: "Andi Dea4",
+      email: "andi.dea4@company.com",
       password: await bcrypt.hash("password123", 10),
       role: "USER",
       verified: true,
@@ -321,10 +321,10 @@ async function main() {
   console.log("- Sample assessments for last 3 months created");
   console.log("\n🔑 Login credentials:");
   console.log("Admin: admin@company.com / admin123");
-  console.log("HR Manager: sarah.johnson@company.com / password123");
-  console.log("IT Staff: john.doe@company.com / password123");
-  console.log("Finance Staff: alice.smith@company.com / password123");
-  console.log("Marketing Manager: bob.wilson@company.com / password123");
+  console.log("HR Manager: andi.dea1@company.com / password123");
+  console.log("IT Staff: andi.dea2@company.com / password123");
+  console.log("Finance Staff: andi.dea3@company.com / password123");
+  console.log("Marketing Manager: andi.dea4@company.com / password123");
 }
 
 main()

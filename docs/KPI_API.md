@@ -50,8 +50,8 @@ Authorization: Bearer <jwt_token>
             "employeeNumber": "EMP001",
             "user": {
               "id": "uuid",
-              "name": "John Doe",
-              "email": "john@example.com"
+              "name": "Andi Dea1",
+              "email": "andi.dea1@company.com"
             }
           }
         ]
@@ -88,8 +88,8 @@ Authorization: Bearer <jwt_token>
           "employeeNumber": "EMP001",
           "user": {
             "id": "uuid",
-            "name": "John Doe",
-            "email": "john@example.com"
+            "name": "Andi Dea1",
+            "email": "andi.dea1@company.com"
           },
           "division": {
             "id": "uuid",
@@ -265,8 +265,8 @@ Authorization: Bearer <jwt_token>
               "id": "uuid",
               "user": {
                 "id": "uuid",
-                "name": "John Doe",
-                "email": "john@example.com"
+                "name": "Andi Dea2",
+                "email": "andi.dea2@company.com"
               }
             }
           }
@@ -309,7 +309,7 @@ Authorization: Bearer <jwt_token>
           "employee": {
             "id": "uuid",
             "user": {
-              "name": "John Doe"
+              "name": "Andi Dea2"
             },
             "division": {
               "name": "IT Department"
@@ -465,8 +465,8 @@ Authorization: Bearer <jwt_token>
           "employeeNumber": "EMP001",
           "user": {
             "id": "uuid",
-            "name": "John Doe",
-            "email": "john@example.com"
+            "name": "Andi Dea1",
+            "email": "andi.dea1@company.com"
           },
           "division": {
             "id": "uuid",
@@ -518,8 +518,8 @@ Authorization: Bearer <jwt_token>
         "id": "uuid",
         "employeeNumber": "EMP001",
         "user": {
-          "name": "John Doe",
-          "email": "john@example.com"
+          "name": "Andi Dea1",
+          "email": "andi.dea1@company.com"
         },
         "division": {
           "name": "IT Department"
@@ -578,8 +578,8 @@ Authorization: Bearer <jwt_token>
           "employeeNumber": "EMP001",
           "user": {
             "id": "uuid",
-            "name": "John Doe",
-            "email": "john@example.com"
+            "name": "Andi Dea1",
+            "email": "andi.dea1@company.com"
           },
           "division": {
             "id": "uuid",
@@ -662,8 +662,8 @@ Authorization: Bearer <jwt_token>
         "employeeNumber": "EMP001",
         "user": {
           "id": "uuid",
-          "name": "John Doe",
-          "email": "john@example.com"
+          "name": "Andi Dea1",
+          "email": "andi.dea1@company.com"
         },
         "division": {
           "id": "uuid",
@@ -742,8 +742,8 @@ Authorization: Bearer <jwt_token>
         "employeeNumber": "EMP001",
         "user": {
           "id": "uuid",
-          "name": "John Doe",
-          "email": "john@example.com"
+          "name": "Andi Dea1",
+          "email": "andi.dea1@company.com"
         },
         "division": {
           "id": "uuid",
@@ -821,7 +821,7 @@ Authorization: Bearer <jwt_token>
         "achievement": 33.15,
         "employee": {
           "user": {
-            "name": "Jane Smith"
+            "name": "Andi Dea4"
           },
           "division": {
             "name": "IT Department"
@@ -870,8 +870,8 @@ Authorization: Bearer <jwt_token>
       "employeeNumber": "EMP001",
       "user": {
         "id": "uuid",
-        "name": "John Doe",
-        "email": "john@example.com"
+        "name": "Andi Dea1",
+        "email": "andi.dea1@company.com"
       },
       "division": {
         "id": "uuid",
@@ -950,7 +950,7 @@ Authorization: Bearer <jwt_token>
           "id": "uuid",
           "employeeNumber": "EMP001",
           "user": {
-            "name": "John Doe"
+            "name": "Andi Dea1"
           },
           "position": {
             "name": "Software Engineer"
@@ -970,7 +970,7 @@ Authorization: Bearer <jwt_token>
         "employee": {
           "id": "uuid",
           "user": {
-            "name": "John Doe"
+            "name": "Andi Dea1"
           },
           "position": {
             "name": "Software Engineer"
@@ -1030,7 +1030,7 @@ Authorization: Bearer <jwt_token>
         "achievement": 33.15,
         "employee": {
           "user": {
-            "name": "Jane Smith"
+            "name": "Andi Dea4"
           },
           "division": {
             "name": "IT Department"
@@ -1048,7 +1048,7 @@ Authorization: Bearer <jwt_token>
         "achievement": 18.8,
         "employee": {
           "user": {
-            "name": "Bob Johnson"
+            "name": "Andi Dea3"
           },
           "division": {
             "name": "IT Department"
@@ -1181,20 +1181,140 @@ Authorization: Bearer <jwt_token>
 #### Login Credentials (dari seed data):
 ```
 Admin: admin@company.com / admin123
-HR Manager: sarah.johnson@company.com / password123  
-IT Staff: john.doe@company.com / password123
-Finance Staff: alice.smith@company.com / password123
-Marketing Manager: bob.wilson@company.com / password123
+HR Manager: andi.dea1@company.com / password123  
+IT Staff: andi.dea2@company.com / password123
+Finance Staff: andi.dea3@company.com / password123
+Marketing Manager: andi.dea4@company.com / password123
 ```
 
 #### Sample Employee IDs:
-- HR Employee: `hr-employee`
-- IT Employee: `it-employee`
-- Finance Employee: `finance-employee`
-- Marketing Employee: `marketing-employee`
+- HR Employee: `hr-employee` (Andi Dea1)
+- IT Employee: `it-employee` (Andi Dea2)
+- Finance Employee: `finance-employee` (Andi Dea3)
+- Marketing Employee: `marketing-employee` (Andi Dea4)
 
 #### Sample KPI IDs:
 - Attendance Rate: `attendance-kpi`
 - Job Performance: `performance-kpi`
-- Teamwork & Collaboration: `teamwork-
-// To be continued ...
+- Teamwork & Collaboration: `teamwork-kpi`
+- Innovation & Creativity: `innovation-kpi`
+
+### Testing Endpoints:
+
+#### Example API Calls:
+
+**1. Get All Assessments with Filters:**
+```bash
+GET /api/assessments?employeeId=it-employee&startDate=2024-09-01&endDate=2024-12-31
+```
+
+**2. Create New Assessment:**
+```bash
+POST /api/assessments
+Content-Type: application/json
+Authorization: Bearer <admin_token>
+
+{
+  "employeeId": "it-employee",
+  "kpiId": "performance-kpi",
+  "weight": 25.0,
+  "target": 90.0,
+  "actual": 85.0,
+  "period": "2025-01-01"
+}
+```
+
+**3. Get Employee Performance Summary:**
+```bash
+GET /api/assessments/employee/hr-employee?startDate=2024-10-01&endDate=2024-12-31
+```
+
+### Integrasi dengan Frontend:
+- Semua response menggunakan format JSON yang konsisten
+- Error handling sudah terstruktur dengan baik
+- Support untuk pagination dan filtering
+- Real-time calculation untuk score dan achievement
+
+---
+
+## Technical Notes
+
+### Perhitungan Otomatis:
+Sistem secara otomatis menghitung dua nilai penting:
+- **Score**: Persentase pencapaian target `(actual/target * 100)`
+- **Achievement**: Kontribusi terhadap total performance `(weight/100 * score)`
+
+### Database Constraints:
+- Unique constraint pada kombinasi employeeId + kpiId + period
+- Foreign key constraints untuk data integrity
+- Cascade delete untuk EmployeeKPI ketika Employee dihapus
+- Index pada field yang sering diquery (employeeId, kpiId, period)
+
+### Performance Considerations:
+- Gunakan filter periode untuk laporan besar
+- Index sudah dioptimalkan untuk query reporting
+- Include statements digunakan untuk mengurangi N+1 queries
+
+### Key Improvements in Updated Controller:
+
+#### 1. Enhanced `getAssessmentsByEmployee`:
+- **Employee validation**: Memastikan employee exists sebelum query assessments
+- **Summary statistics**: Menambahkan totalAssessments, averageScore, totalAchievement
+- **Complete response**: Include semua relasi (employee, user, division, position, kpi)
+- **Proper rounding**: Average score dibulatkan ke 2 desimal
+
+#### 2. Improved Error Handling:
+- **Consistent error format**: Semua error menggunakan format yang sama
+- **Detailed validation**: Error messages yang lebih spesifik
+- **Proper HTTP status codes**: 404 untuk not found, 422 untuk validation errors
+
+#### 3. Enhanced Data Validation:
+- **Employee existence check**: Validasi employee ada di database
+- **KPI existence check**: Validasi KPI ada di database
+- **Duplicate prevention**: Check assessment sudah ada untuk kombinasi employee+kpi+period
+- **Numeric validation**: Weight, target, actual harus dalam range yang valid
+
+#### 4. Automatic Calculations:
+- **Score calculation**: `(actual/target) * 100`
+- **Achievement calculation**: `(weight/100) * score`
+- **Recalculation on update**: Otomatis recalculate ketika ada perubahan
+
+#### 5. Improved Seed Data:
+- **Realistic sample data**: 4 employees dengan different roles
+- **Complete relationships**: User-Employee linking yang proper
+- **3-month history**: Sample assessments untuk analisis
+- **Consistent IDs**: ID yang mudah diingat untuk testing
+
+### API Response Enhancements:
+
+#### Assessment by Employee Response now includes:
+```json
+{
+  "employee": {
+    "id": "uuid",
+    "employeeNumber": "EMP001", 
+    "pnosNumber": "PNOS001",
+    "dateJoined": "2020-01-15T00:00:00.000Z"
+  },
+  "summary": {
+    "totalAssessments": 12,
+    "averageScore": 94.50,
+    "totalAchievement": 284.70
+  }
+}
+```
+
+### Database Schema Validation:
+Schema yang ada sudah optimal dan tidak perlu perubahan:
+- ✅ Proper foreign keys dan relationships
+- ✅ Unique constraints untuk data integrity  
+- ✅ Indexes untuk performance
+- ✅ Cascade delete untuk data consistency
+- ✅ Audit trail dengan createdBy/updatedBy
+
+---
+
+**End of Documentation**
+
+KPI Management System API v1.1  
+Updated with enhanced assessment controller, improved error handling, and comprehensive sample data for testing.
