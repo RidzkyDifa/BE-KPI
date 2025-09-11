@@ -1,4 +1,3 @@
-// services/notificationService.ts
 import { PrismaClient } from "@prisma/client";
 import { Server as SocketIOServer } from "socket.io";
 
@@ -10,121 +9,64 @@ export const setSocketIO = (socketInstance: SocketIOServer) => {
 };
 
 class NotificationService {
-  
-  // Buat notifikasi baru
   async create(userId: string, title: string, message: string) {
-    const notification = await prisma.notification.create({
+    const notif = await prisma.notification.create({
       data: { userId, title, message }
     });
 
-    // Kirim real-time ke user
     if (io) {
-      io.to(`user_${userId}`).emit('new_notification', {
-        id: notification.id,
-        title: notification.title,
-        message: notification.message,
-        createdAt: notification.createdAt
+      io.to(`user_${userId}`).emit("new_notification", {
+        id: notif.id,
+        title: notif.title,
+        message: notif.message,
+        createdAt: notif.createdAt
       });
-      
-      // Update unread count
-      const count = await this.getUnreadCount(userId);
-      io.to(`user_${userId}`).emit('unread_count', count);
     }
 
-    return notification;
+    return notif;
   }
 
-  // Buat notifikasi untuk banyak user sekaligus
   async createForUsers(userIds: string[], title: string, message: string) {
-    const notifications = userIds.map(userId => ({
-      userId, title, message
-    }));
+    const data = userIds.map(userId => ({ userId, title, message }));
+    await prisma.notification.createMany({ data });
 
-    await prisma.notification.createMany({
-      data: notifications
-    });
-
-    // Kirim real-time ke semua user
     if (io) {
-      userIds.forEach(async (userId) => {
-        io?.to(`user_${userId}`).emit('new_notification', {
-          title, message, createdAt: new Date()
-        });
-        
-        const count = await this.getUnreadCount(userId);
-        io?.to(`user_${userId}`).emit('unread_count', count);
+      userIds.forEach(userId => {
+        io?.to(`user_${userId}`).emit("new_notification", { title, message, createdAt: new Date() });
       });
     }
   }
 
-  // Hitung notifikasi yang belum dibaca
-  async getUnreadCount(userId: string) {
-    return await prisma.notification.count({
-      where: { userId, isRead: false }
-    });
-  }
-
-  // ===== CONTOH PENGGUNAAN =====
-  
-  // Notifikasi karyawan baru
+  // 🔔 Helper Notifikasi
   async employeeCreated(employeeName: string) {
-    const admins = await prisma.user.findMany({
-      where: { role: 'ADMIN' }
-    });
-    
-    const adminIds = admins.map(admin => admin.id);
-    await this.createForUsers(
-      adminIds,
-      'Karyawan Baru',
-      `Karyawan baru "${employeeName}" telah ditambahkan`
-    );
+    const admins = await prisma.user.findMany({ where: { role: "ADMIN" } });
+    const adminIds = admins.map(a => a.id);
+    await this.createForUsers(adminIds, "Karyawan Baru", `Karyawan "${employeeName}" berhasil ditambahkan`);
   }
 
-  // Notifikasi penilaian KPI
-  async kpiAssessed(employeeId: string, kpiName: string, score: number) {
-    const employee = await prisma.employee.findUnique({
-      where: { id: employeeId },
-      include: { user: true }
-    });
-
-    if (employee?.user) {
-      const status = score >= 80 ? 'Excellent' : score >= 60 ? 'Good' : 'Needs Improvement';
-      await this.create(
-        employee.user.id,
-        'Penilaian KPI Baru',
-        `KPI "${kpiName}" Anda telah dinilai dengan skor ${score}% (${status})`
-      );
-    }
+  async kpiAssigned(userId: string, kpiName: string) {
+    await this.create(userId, "KPI Baru", `Anda mendapatkan KPI "${kpiName}"`);
   }
 
-  // Notifikasi reminder
-  async kpiReminder(employeeId: string, kpiName: string) {
-    const employee = await prisma.employee.findUnique({
-      where: { id: employeeId },
-      include: { user: true }
-    });
-
-    if (employee?.user) {
-      await this.create(
-        employee.user.id,
-        'Pengingat KPI',
-        `Jangan lupa untuk melengkapi penilaian "${kpiName}" Anda`
-      );
-    }
+  async kpiAssessed(userId: string, kpiName: string, score: number) {
+    const status = score >= 80 ? "Sangat Baik" : score >= 60 ? "Baik" : "Perlu Perbaikan";
+    await this.create(userId, "Penilaian KPI", `KPI "${kpiName}" dinilai ${score}% (${status})`);
   }
 
-  // Notifikasi user baru registrasi
-  async userRegistered(userName: string, userEmail: string) {
-    const admins = await prisma.user.findMany({
-      where: { role: 'ADMIN' }
-    });
-    
-    const adminIds = admins.map(admin => admin.id);
-    await this.createForUsers(
-      adminIds,
-      'User Baru Terdaftar',
-      `${userName} (${userEmail}) baru saja mendaftar`
-    );
+  async reportGenerated(userIds: string[], period: string) {
+    await this.createForUsers(userIds, "Laporan Baru", `Laporan periode ${period} sudah tersedia`);
+  }
+
+  async roleChanged(userId: string, newRole: string) {
+    await this.create(userId, "Perubahan Role", `Role akun Anda telah berubah menjadi "${newRole}"`);
+  }
+
+  async passwordReset(userId: string) {
+    await this.create(userId, "Reset Password", "Password Anda berhasil direset");
+  }
+
+  async emailVerified(userId: string) {
+    await this.create(userId, "Verifikasi Email", "Email Anda berhasil diverifikasi");
   }
 }
 

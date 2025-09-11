@@ -4,7 +4,7 @@ import prisma from "../utils/prisma";
 // GET /api/kpis - Get all KPIs
 export const getAllKPIs = async (req: Request, res: Response) => {
   try {
-    const kpis = await prisma.KPI.findMany({
+    const kpis = await prisma.kPI.findMany({
       include: {
         employeeKpis: {
           include: {
@@ -54,7 +54,7 @@ export const getKPIById = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
 
-    const kpi = await prisma.KPI.findUnique({
+    const kpi = await prisma.kPI.findUnique({
       where: { id },
       include: {
         employeeKpis: {
@@ -123,7 +123,7 @@ export const createKPI = async (req: Request, res: Response) => {
 
     // Check if KPI name already exists
     if (name && name.trim()) {
-      const existingKPI = await prisma.KPI.findFirst({
+      const existingKPI = await prisma.kPI.findFirst({
         where: { name: name.trim() }
       });
       if (existingKPI) {
@@ -141,7 +141,7 @@ export const createKPI = async (req: Request, res: Response) => {
     }
 
     // Create new KPI in database
-    const newKPI = await prisma.KPI.create({
+    const newKPI = await prisma.kPI.create({
       data: {
         name: name.trim()
       }
@@ -176,7 +176,7 @@ export const updateKPI = async (req: Request, res: Response) => {
     const errors: { [key: string]: string[] } = {};
 
     // Check if KPI exists
-    const existingKPI = await prisma.KPI.findUnique({
+    const existingKPI = await prisma.kPI.findUnique({
       where: { id }
     });
 
@@ -197,7 +197,7 @@ export const updateKPI = async (req: Request, res: Response) => {
 
     // Check if KPI name already exists (excluding current KPI)
     if (name && name.trim()) {
-      const duplicateKPI = await prisma.KPI.findFirst({
+      const duplicateKPI = await prisma.kPI.findFirst({
         where: { 
           name: name.trim(),
           NOT: { id }
@@ -218,7 +218,7 @@ export const updateKPI = async (req: Request, res: Response) => {
     }
 
     // Update KPI in database
-    const updatedKPI = await prisma.KPI.update({
+    const updatedKPI = await prisma.kPI.update({
       where: { id },
       data: {
         name: name.trim()
@@ -251,7 +251,7 @@ export const deleteKPI = async (req: Request, res: Response) => {
     const { id } = req.params;
 
     // Check if KPI exists
-    const existingKPI = await prisma.KPI.findUnique({
+    const existingKPI = await prisma.kPI.findUnique({
       where: { id },
       include: {
         employeeKpis: true
@@ -280,7 +280,7 @@ export const deleteKPI = async (req: Request, res: Response) => {
     }
 
     // Delete KPI from database
-    await prisma.KPI.delete({
+    await prisma.kPI.delete({
       where: { id }
     });
 

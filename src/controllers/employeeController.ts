@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import prisma from "../utils/prisma";
+import notificationService from "../services/notificationService";
 
 export const createEmployee = async (req: Request, res: Response) => {
   try {
@@ -112,6 +113,15 @@ export const createEmployee = async (req: Request, res: Response) => {
           },
         },
       });
+
+      // setelah employee berhasil dibuat & (opsional) link ke user
+      const displayName =
+        updatedEmployee?.user?.name ||
+        employee.employeeNumber ||
+        "Karyawan Baru";
+
+      // notifikasi ke admin
+      await notificationService.employeeCreated(displayName);
 
       return res.status(201).json({
         status: "success",
@@ -540,7 +550,6 @@ export const deleteEmployee = async (req: Request, res: Response) => {
   }
 };
 
-
 export const linkEmployeeToUser = async (req: Request, res: Response) => {
   try {
     const { id } = req.params; // employee ID
@@ -696,7 +705,6 @@ export const unlinkEmployeeFromUser = async (req: Request, res: Response) => {
     });
   }
 };
-
 
 /**
  * ⚡️ Saran kecil:

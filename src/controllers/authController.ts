@@ -13,6 +13,7 @@ import {
 } from "../utils/verifyJWT";
 import { Request, Response } from "express";
 import { randomBytes } from "crypto";
+import notificationService from "../services/notificationService";
 
 const SECRET = process.env.JWT_SECRET;
 
@@ -179,6 +180,8 @@ export const verifyEmail = async (req: Request, res: Response) => {
         verificationTokenExpires: null,
       },
     });
+
+    await notificationService.emailVerified(user.id);
 
     // sosse (8/13): apakah akan tetap begini? atau langsung select/filter aja datanya dari prisma
     res.status(200).json({
@@ -630,6 +633,8 @@ export const resetPassword = async (req: Request, res: Response) => {
       where: { id: decodedId.id },
       data: { password: hashedPassword },
     });
+
+    await notificationService.passwordReset(user.id);
 
     res.status(200).json({
       status: "success",

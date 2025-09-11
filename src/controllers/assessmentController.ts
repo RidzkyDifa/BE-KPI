@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import prisma from "../utils/prisma";
+import notificationService from "../services/notificationService";
 
 // GET /api/assessments - Get all assessments with filters
 export const getAllAssessments = async (req: Request, res: Response) => {
@@ -8,15 +9,15 @@ export const getAllAssessments = async (req: Request, res: Response) => {
 
     // Build where clause for filtering
     const whereClause: any = {};
-    
+
     if (employeeId) whereClause.employeeId = employeeId as string;
     if (kpiId) whereClause.kpiId = kpiId as string;
     if (period) whereClause.period = new Date(period as string);
-    
+
     if (startDate && endDate) {
       whereClause.period = {
         gte: new Date(startDate as string),
-        lte: new Date(endDate as string)
+        lte: new Date(endDate as string),
       };
     }
 
@@ -29,19 +30,16 @@ export const getAllAssessments = async (req: Request, res: Response) => {
               select: {
                 id: true,
                 name: true,
-                email: true
-              }
+                email: true,
+              },
             },
             division: true,
-            position: true
-          }
+            position: true,
+          },
         },
-        kpi: true
+        kpi: true,
       },
-      orderBy: [
-        { period: 'desc' },
-        { createdAt: 'desc' }
-      ]
+      orderBy: [{ period: "desc" }, { createdAt: "desc" }],
     });
 
     res.status(200).json({
@@ -49,17 +47,18 @@ export const getAllAssessments = async (req: Request, res: Response) => {
       code: 200,
       data: {
         assessments,
-        total: assessments.length
-      }
+        total: assessments.length,
+      },
     });
   } catch (err) {
-    const errorMessage = err instanceof Error ? err.message : "Internal server error";
+    const errorMessage =
+      err instanceof Error ? err.message : "Internal server error";
     res.status(500).json({
       status: "error",
       code: 500,
       errors: {
-        server: [errorMessage]
-      }
+        server: [errorMessage],
+      },
     });
   }
 };
@@ -78,15 +77,15 @@ export const getAssessmentById = async (req: Request, res: Response) => {
               select: {
                 id: true,
                 name: true,
-                email: true
-              }
+                email: true,
+              },
             },
             division: true,
-            position: true
-          }
+            position: true,
+          },
         },
-        kpi: true
-      }
+        kpi: true,
+      },
     });
 
     if (!assessment) {
@@ -94,8 +93,8 @@ export const getAssessmentById = async (req: Request, res: Response) => {
         status: "error",
         code: 404,
         errors: {
-          assessment: ["Assessment not found"]
-        }
+          assessment: ["Assessment not found"],
+        },
       });
     }
 
@@ -103,17 +102,18 @@ export const getAssessmentById = async (req: Request, res: Response) => {
       status: "success",
       code: 200,
       data: {
-        assessment
-      }
+        assessment,
+      },
     });
   } catch (err) {
-    const errorMessage = err instanceof Error ? err.message : "Internal server error";
+    const errorMessage =
+      err instanceof Error ? err.message : "Internal server error";
     res.status(500).json({
       status: "error",
       code: 500,
       errors: {
-        server: [errorMessage]
-      }
+        server: [errorMessage],
+      },
     });
   }
 };
@@ -122,7 +122,7 @@ export const getAssessmentById = async (req: Request, res: Response) => {
 export const createAssessment = async (req: Request, res: Response) => {
   try {
     const { employeeId, kpiId, weight, target, actual, period } = req.body;
-    const userId = req.user?.id; // From auth middleware
+    const userId = (req as any).user.userId;// From auth middleware
 
     const errors: { [key: string]: string[] } = {};
 
@@ -132,14 +132,16 @@ export const createAssessment = async (req: Request, res: Response) => {
     if (!weight || weight <= 0 || weight > 100) {
       errors.weight = ["Weight must be between 0.1 and 100"];
     }
-    if (!target || target <= 0) errors.target = ["Target must be greater than 0"];
-    if (actual === undefined || actual < 0) errors.actual = ["Actual value must be 0 or greater"];
+    if (!target || target <= 0)
+      errors.target = ["Target must be greater than 0"];
+    if (actual === undefined || actual < 0)
+      errors.actual = ["Actual value must be 0 or greater"];
     if (!period) errors.period = ["Period is required"];
 
     // Check if employee exists
     if (employeeId) {
       const employee = await prisma.employee.findUnique({
-        where: { id: employeeId }
+        where: { id: employeeId },
       });
       if (!employee) {
         errors.employeeId = ["Employee not found"];
@@ -149,7 +151,7 @@ export const createAssessment = async (req: Request, res: Response) => {
     // Check if KPI exists
     if (kpiId) {
       const kpi = await prisma.kPI.findUnique({
-        where: { id: kpiId }
+        where: { id: kpiId },
       });
       if (!kpi) {
         errors.kpiId = ["KPI not found"];
@@ -163,12 +165,14 @@ export const createAssessment = async (req: Request, res: Response) => {
           employeeId_kpiId_period: {
             employeeId,
             kpiId,
-            period: new Date(period)
-          }
-        }
+            period: new Date(period),
+          },
+        },
       });
       if (existingAssessment) {
-        errors.assessment = ["Assessment for this employee, KPI, and period already exists"];
+        errors.assessment = [
+          "Assessment for this employee, KPI, and period already exists",
+        ];
       }
     }
 
@@ -177,7 +181,7 @@ export const createAssessment = async (req: Request, res: Response) => {
       return res.status(422).json({
         status: "error",
         code: 422,
-        errors
+        errors,
       });
     }
 
@@ -196,7 +200,7 @@ export const createAssessment = async (req: Request, res: Response) => {
         score,
         achievement,
         period: new Date(period),
-        createdBy: userId
+        createdBy: userId,
       },
       include: {
         employee: {
@@ -205,33 +209,52 @@ export const createAssessment = async (req: Request, res: Response) => {
               select: {
                 id: true,
                 name: true,
-                email: true
-              }
+                email: true,
+              },
             },
             division: true,
-            position: true
-          }
+            position: true,
+          },
         },
-        kpi: true
-      }
+        kpi: true,
+      },
     });
+
+   // setelah berhasil buat assessment
+if (newAssessment.employee?.user) {
+  // Notif KPI baru
+  await notificationService.kpiAssigned(
+    newAssessment.employee.user.id,
+    newAssessment.kpi.name
+  );
+
+  // Kalau langsung ada nilai (actual > 0) → notif KPI dinilai
+  if (newAssessment.actual > 0) {
+    await notificationService.kpiAssessed(
+      newAssessment.employee.user.id,
+      newAssessment.kpi.name,
+      newAssessment.score
+    );
+  }
+}
 
     res.status(201).json({
       status: "success",
       code: 201,
       data: {
         message: "Assessment created successfully",
-        assessment: newAssessment
-      }
+        assessment: newAssessment,
+      },
     });
   } catch (err) {
-    const errorMessage = err instanceof Error ? err.message : "Internal server error";
+    const errorMessage =
+      err instanceof Error ? err.message : "Internal server error";
     res.status(500).json({
       status: "error",
       code: 500,
       errors: {
-        server: [errorMessage]
-      }
+        server: [errorMessage],
+      },
     });
   }
 };
@@ -241,13 +264,13 @@ export const updateAssessment = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const { weight, target, actual } = req.body;
-    const userId = req.user?.id; // From auth middleware
+     const userId = (req as any).user.userId; // From auth middleware
 
     const errors: { [key: string]: string[] } = {};
 
     // Check if assessment exists
     const existingAssessment = await prisma.employeeKPI.findUnique({
-      where: { id }
+      where: { id },
     });
 
     if (!existingAssessment) {
@@ -255,8 +278,8 @@ export const updateAssessment = async (req: Request, res: Response) => {
         status: "error",
         code: 404,
         errors: {
-          assessment: ["Assessment not found"]
-        }
+          assessment: ["Assessment not found"],
+        },
       });
     }
 
@@ -276,13 +299,13 @@ export const updateAssessment = async (req: Request, res: Response) => {
       return res.status(422).json({
         status: "error",
         code: 422,
-        errors
+        errors,
       });
     }
 
     // Prepare update data
     const updateData: any = {
-      updatedBy: userId
+      updatedBy: userId,
     };
 
     if (weight !== undefined) updateData.weight = parseFloat(weight.toString());
@@ -290,9 +313,18 @@ export const updateAssessment = async (req: Request, res: Response) => {
     if (actual !== undefined) updateData.actual = parseFloat(actual.toString());
 
     // Recalculate score and achievement if target or actual changed
-    const finalWeight = updateData.weight !== undefined ? updateData.weight : existingAssessment.weight;
-    const finalTarget = updateData.target !== undefined ? updateData.target : existingAssessment.target;
-    const finalActual = updateData.actual !== undefined ? updateData.actual : existingAssessment.actual;
+    const finalWeight =
+      updateData.weight !== undefined
+        ? updateData.weight
+        : existingAssessment.weight;
+    const finalTarget =
+      updateData.target !== undefined
+        ? updateData.target
+        : existingAssessment.target;
+    const finalActual =
+      updateData.actual !== undefined
+        ? updateData.actual
+        : existingAssessment.actual;
 
     updateData.score = (finalActual / finalTarget) * 100;
     updateData.achievement = (finalWeight / 100) * updateData.score;
@@ -308,33 +340,42 @@ export const updateAssessment = async (req: Request, res: Response) => {
               select: {
                 id: true,
                 name: true,
-                email: true
-              }
+                email: true,
+              },
             },
             division: true,
-            position: true
-          }
+            position: true,
+          },
         },
-        kpi: true
-      }
+        kpi: true,
+      },
     });
+
+    if (updatedAssessment.employee?.user) {
+  await notificationService.kpiAssessed(
+    updatedAssessment.employee.user.id,
+    updatedAssessment.kpi.name,
+    updatedAssessment.score
+  );
+}
 
     res.status(200).json({
       status: "success",
       code: 200,
       data: {
         message: "Assessment updated successfully",
-        assessment: updatedAssessment
-      }
+        assessment: updatedAssessment,
+      },
     });
   } catch (err) {
-    const errorMessage = err instanceof Error ? err.message : "Internal server error";
+    const errorMessage =
+      err instanceof Error ? err.message : "Internal server error";
     res.status(500).json({
       status: "error",
       code: 500,
       errors: {
-        server: [errorMessage]
-      }
+        server: [errorMessage],
+      },
     });
   }
 };
@@ -346,7 +387,7 @@ export const deleteAssessment = async (req: Request, res: Response) => {
 
     // Check if assessment exists
     const existingAssessment = await prisma.employeeKPI.findUnique({
-      where: { id }
+      where: { id },
     });
 
     if (!existingAssessment) {
@@ -354,31 +395,32 @@ export const deleteAssessment = async (req: Request, res: Response) => {
         status: "error",
         code: 404,
         errors: {
-          assessment: ["Assessment not found"]
-        }
+          assessment: ["Assessment not found"],
+        },
       });
     }
 
     // Delete assessment from database
     await prisma.employeeKPI.delete({
-      where: { id }
+      where: { id },
     });
 
     res.status(200).json({
       status: "success",
       code: 200,
       data: {
-        message: "Assessment deleted successfully"
-      }
+        message: "Assessment deleted successfully",
+      },
     });
   } catch (err) {
-    const errorMessage = err instanceof Error ? err.message : "Internal server error";
+    const errorMessage =
+      err instanceof Error ? err.message : "Internal server error";
     res.status(500).json({
       status: "error",
       code: 500,
       errors: {
-        server: [errorMessage]
-      }
+        server: [errorMessage],
+      },
     });
   }
 };
@@ -391,7 +433,7 @@ export const getAssessmentsByEmployee = async (req: Request, res: Response) => {
 
     // Check if employee exists
     const employee = await prisma.employee.findUnique({
-      where: { id: employeeId }
+      where: { id: employeeId },
     });
 
     if (!employee) {
@@ -399,19 +441,19 @@ export const getAssessmentsByEmployee = async (req: Request, res: Response) => {
         status: "error",
         code: 404,
         errors: {
-          employee: ["Employee not found"]
-        }
+          employee: ["Employee not found"],
+        },
       });
     }
 
     // Build where clause
     const whereClause: any = { employeeId };
-    
+
     if (period) whereClause.period = new Date(period as string);
     if (startDate && endDate) {
       whereClause.period = {
         gte: new Date(startDate as string),
-        lte: new Date(endDate as string)
+        lte: new Date(endDate as string),
       };
     }
 
@@ -424,26 +466,30 @@ export const getAssessmentsByEmployee = async (req: Request, res: Response) => {
               select: {
                 id: true,
                 name: true,
-                email: true
-              }
+                email: true,
+              },
             },
             division: true,
-            position: true
-          }
+            position: true,
+          },
         },
-        kpi: true
+        kpi: true,
       },
-      orderBy: [
-        { period: 'desc' },
-        { createdAt: 'desc' }
-      ]
+      orderBy: [{ period: "desc" }, { createdAt: "desc" }],
     });
 
     // Calculate summary statistics
     const totalAssessments = assessments.length;
-    const totalScore = assessments.reduce((sum, assessment) => sum + assessment.score, 0);
-    const averageScore = totalAssessments > 0 ? totalScore / totalAssessments : 0;
-    const totalAchievement = assessments.reduce((sum, assessment) => sum + assessment.achievement, 0);
+    const totalScore = assessments.reduce(
+      (sum, assessment) => sum + assessment.score,
+      0
+    );
+    const averageScore =
+      totalAssessments > 0 ? totalScore / totalAssessments : 0;
+    const totalAchievement = assessments.reduce(
+      (sum, assessment) => sum + assessment.achievement,
+      0
+    );
 
     res.status(200).json({
       status: "success",
@@ -453,24 +499,25 @@ export const getAssessmentsByEmployee = async (req: Request, res: Response) => {
           id: employee.id,
           employeeNumber: employee.employeeNumber,
           pnosNumber: employee.pnosNumber,
-          dateJoined: employee.dateJoined
+          dateJoined: employee.dateJoined,
         },
         assessments,
         summary: {
           totalAssessments,
           averageScore: Math.round(averageScore * 100) / 100, // Round to 2 decimal places
-          totalAchievement: Math.round(totalAchievement * 100) / 100
-        }
-      }
+          totalAchievement: Math.round(totalAchievement * 100) / 100,
+        },
+      },
     });
   } catch (err) {
-    const errorMessage = err instanceof Error ? err.message : "Internal server error";
+    const errorMessage =
+      err instanceof Error ? err.message : "Internal server error";
     res.status(500).json({
       status: "error",
       code: 500,
       errors: {
-        server: [errorMessage]
-      }
+        server: [errorMessage],
+      },
     });
   }
 };

@@ -1,45 +1,29 @@
 # Division API Documentation
 
-API untuk manajemen divisi perusahaan. Semua endpoint memerlukan authentication, dan operasi create/update/delete memerlukan role ADMIN.
-
 ## Base URL
 ```
-http://localhost:3000/api/divisions
-```
-
-## Authentication
-Semua endpoint memerlukan header Authorization dengan JWT token:
-```
-Authorization: Bearer <your_jwt_token>
+/api/divisions
 ```
 
 ---
 
-## 1. GET /api/divisions - List Semua Divisi
+## 1. Get All Divisions
 
-**Permission**: User (butuh login)  
-**Method**: GET
+**Endpoint:** `GET /api/divisions`  
+**Auth:** Bearer Token Required  
+**Admin:** No  
 
-### Query Parameters (Optional)
-| Parameter | Type | Default | Description |
-|-----------|------|---------|-------------|
-| page | number | 1 | Halaman ke berapa |
-| limit | number | 10 | Jumlah data per halaman |
-| search | string | "" | Cari di nama/deskripsi divisi |
-| includeEmployees | boolean | false | Sertakan data karyawan |
-
-### Contoh Request
-```javascript
-// React/JavaScript
-const response = await fetch('/api/divisions?page=1&limit=5&search=IT&includeEmployees=true', {
-  headers: {
-    'Authorization': `Bearer ${token}`,
-    'Content-Type': 'application/json'
-  }
-});
+### Query Parameters
+```json
+{
+  "page": "string (optional, default: 1)",
+  "limit": "string (optional, default: 10)",
+  "search": "string (optional, default: '')",
+  "includeEmployees": "string (optional, default: 'false')"
+}
 ```
 
-### Response Success (200)
+### Success Response (200)
 ```json
 {
   "status": "success",
@@ -47,37 +31,33 @@ const response = await fetch('/api/divisions?page=1&limit=5&search=IT&includeEmp
   "data": {
     "divisions": [
       {
-        "id": "div-123-uuid",
-        "name": "IT Department",
-        "description": "Divisi Teknologi Informasi",
-        "weight": 85,
-        "createdAt": "2024-01-15T08:30:00.000Z",
-        "updatedAt": "2024-01-15T08:30:00.000Z",
+        "id": "div-001",
+        "name": "IT Development",
+        "description": "Software development and technology solutions",
+        "weight": 25.5,
+        "createdAt": "2024-12-01T10:00:00.000Z",
+        "updatedAt": "2024-12-01T10:00:00.000Z",
         "_count": {
-          "employees": 12
-        },
-        "employees": [
-          {
-            "id": "emp-456-uuid",
-            "employeeNumber": "EMP001",
-            "user": {
-              "id": "user-789-uuid",
-              "name": "Andi Dea",
-              "email": "andi.dea@company.com"
-            },
-            "position": {
-              "id": "pos-101-uuid",
-              "name": "Senior Developer"
-            }
-          }
-        ]
+          "employees": 8
+        }
+      },
+      {
+        "id": "div-002",
+        "name": "Marketing",
+        "description": "Brand promotion and customer acquisition",
+        "weight": 20.0,
+        "createdAt": "2024-12-01T09:30:00.000Z",
+        "updatedAt": "2024-12-01T09:30:00.000Z",
+        "_count": {
+          "employees": 5
+        }
       }
     ],
     "pagination": {
       "currentPage": 1,
-      "totalPages": 3,
+      "totalPages": 2,
       "totalCount": 15,
-      "limit": 5,
+      "limit": 10,
       "hasNext": true,
       "hasPrev": false
     }
@@ -85,53 +65,128 @@ const response = await fetch('/api/divisions?page=1&limit=5&search=IT&includeEmp
 }
 ```
 
----
-
-## 2. GET /api/divisions/:id - Detail Divisi
-
-**Permission**: User (butuh login)  
-**Method**: GET
-
-### Contoh Request
-```javascript
-const response = await fetch('/api/divisions/div-123-uuid', {
-  headers: {
-    'Authorization': `Bearer ${token}`
+### Success Response with Employees (200)
+When `includeEmployees=true`:
+```json
+{
+  "status": "success",
+  "code": 200,
+  "data": {
+    "divisions": [
+      {
+        "id": "div-003",
+        "name": "Human Resources",
+        "description": "Employee management and organizational development",
+        "weight": 15.0,
+        "createdAt": "2024-12-01T08:00:00.000Z",
+        "updatedAt": "2024-12-01T08:00:00.000Z",
+        "_count": {
+          "employees": 3
+        },
+        "employees": [
+          {
+            "id": "emp-789",
+            "employeeNumber": "EMP003",
+            "pnosNumber": "PNOS003",
+            "dateJoined": "2023-06-01T00:00:00.000Z",
+            "user": {
+              "id": "user-125",
+              "name": "Andi Dea3",
+              "email": "andi.dea3@company.com"
+            },
+            "position": {
+              "id": "pos-003",
+              "name": "HR Specialist"
+            }
+          }
+        ]
+      }
+    ],
+    "pagination": {
+      "currentPage": 1,
+      "totalPages": 1,
+      "totalCount": 3,
+      "limit": 10,
+      "hasNext": false,
+      "hasPrev": false
+    }
   }
-});
+}
 ```
 
-### Response Success (200)
+### Error Response (500)
+```json
+{
+  "status": "error",
+  "code": 500,
+  "errors": {
+    "server": ["Internal server error"]
+  }
+}
+```
+
+---
+
+## 2. Get Division by ID
+
+**Endpoint:** `GET /api/divisions/:id`  
+**Auth:** Bearer Token Required  
+**Admin:** No  
+
+### Path Parameters
+- `id` (string, required): Division ID
+
+### Success Response (200)
 ```json
 {
   "status": "success",
   "code": 200,
   "data": {
     "division": {
-      "id": "div-123-uuid",
-      "name": "IT Department",
-      "description": "Divisi Teknologi Informasi dan Sistem",
-      "weight": 85,
-      "createdAt": "2024-01-15T08:30:00.000Z",
-      "updatedAt": "2024-01-15T08:30:00.000Z",
+      "id": "div-001",
+      "name": "IT Development",
+      "description": "Software development and technology solutions",
+      "weight": 25.5,
+      "createdAt": "2024-12-01T10:00:00.000Z",
+      "updatedAt": "2024-12-01T10:00:00.000Z",
       "_count": {
-        "employees": 12
+        "employees": 8
       },
       "employees": [
         {
-          "id": "emp-456-uuid",
+          "id": "emp-456",
           "employeeNumber": "EMP001",
+          "pnosNumber": "PNOS001",
+          "dateJoined": "2023-01-15T00:00:00.000Z",
           "user": {
-            "id": "user-789-uuid",
+            "id": "user-123",
             "name": "Andi Dea",
             "email": "andi.dea@company.com",
+            "role": "ADMIN",
+            "verified": true
+          },
+          "position": {
+            "id": "pos-001",
+            "name": "Senior Developer",
+            "description": "Lead software development projects"
+          }
+        },
+        {
+          "id": "emp-457",
+          "employeeNumber": "EMP004",
+          "pnosNumber": "PNOS004",
+          "dateJoined": "2023-08-10T00:00:00.000Z",
+          "user": {
+            "id": "user-126",
+            "name": "Andi Dea 2",
+            "email": "andi.dea2@company.com",
             "role": "USER",
             "verified": true
           },
           "position": {
-            "id": "pos-101-uuid",
-            "name": "Senior Developer",
-            "description": "Pengembang sistem senior"
+            "id": "pos-004",
+            "name": "Junior Developer",
+            "description": "Support software development activities"
           }
         }
       ]
@@ -140,7 +195,7 @@ const response = await fetch('/api/divisions/div-123-uuid', {
 }
 ```
 
-### Response Error (404)
+### Error Response (404)
 ```json
 {
   "status": "error",
@@ -153,42 +208,22 @@ const response = await fetch('/api/divisions/div-123-uuid', {
 
 ---
 
-## 3. POST /api/divisions - Buat Divisi Baru
+## 3. Create Division
 
-**Permission**: Admin only  
-**Method**: POST
+**Endpoint:** `POST /api/divisions`  
+**Auth:** Bearer Token Required  
+**Admin:** Yes  
 
 ### Request Body
 ```json
 {
-  "name": "Marketing Department",
-  "description": "Divisi Pemasaran dan Promosi",
-  "weight": 75
+  "name": "Quality Assurance",
+  "description": "Software testing and quality control",
+  "weight": 18.5
 }
 ```
 
-### Validasi
-- `name`: Required, minimal 2 karakter, harus unique
-- `description`: Optional
-- `weight`: Optional, harus angka positif
-
-### Contoh Request
-```javascript
-const response = await fetch('/api/divisions', {
-  method: 'POST',
-  headers: {
-    'Authorization': `Bearer ${token}`,
-    'Content-Type': 'application/json'
-  },
-  body: JSON.stringify({
-    name: "Marketing Department",
-    description: "Divisi Pemasaran dan Promosi",
-    weight: 75
-  })
-});
-```
-
-### Response Success (201)
+### Success Response (201)
 ```json
 {
   "status": "success",
@@ -196,61 +231,61 @@ const response = await fetch('/api/divisions', {
   "data": {
     "message": "Division created successfully",
     "division": {
-      "id": "div-new-uuid",
-      "name": "Marketing Department",
-      "description": "Divisi Pemasaran dan Promosi",
-      "weight": 75,
-      "createdAt": "2024-01-16T10:15:00.000Z",
-      "updatedAt": "2024-01-16T10:15:00.000Z"
+      "id": "div-004",
+      "name": "Quality Assurance",
+      "description": "Software testing and quality control",
+      "weight": 18.5,
+      "createdAt": "2024-12-01T11:00:00.000Z",
+      "updatedAt": "2024-12-01T11:00:00.000Z"
     }
   }
 }
 ```
 
-### Response Error (422)
+### Error Response (422) - Validation Error
 ```json
 {
   "status": "error",
   "code": 422,
   "errors": {
-    "name": ["Division name already exists"],
+    "name": ["Name must be at least 2 characters"],
     "weight": ["Weight must be a positive number"]
+  }
+}
+```
+
+### Error Response (422) - Duplicate Name
+```json
+{
+  "status": "error",
+  "code": 422,
+  "errors": {
+    "name": ["Division name already exists"]
   }
 }
 ```
 
 ---
 
-## 4. PUT /api/divisions/:id - Update Divisi
+## 4. Update Division
 
-**Permission**: Admin only  
-**Method**: PUT
+**Endpoint:** `PUT /api/divisions/:id`  
+**Auth:** Bearer Token Required  
+**Admin:** Yes  
 
-### Request Body (semua field optional)
+### Path Parameters
+- `id` (string, required): Division ID
+
+### Request Body
 ```json
 {
-  "name": "IT & Digital Department",
-  "description": "Divisi Teknologi Informasi dan Digital",
-  "weight": 90
+  "name": "Digital Marketing",
+  "description": "Online marketing and social media management",
+  "weight": 22.0
 }
 ```
 
-### Contoh Request
-```javascript
-const response = await fetch('/api/divisions/div-123-uuid', {
-  method: 'PUT',
-  headers: {
-    'Authorization': `Bearer ${token}`,
-    'Content-Type': 'application/json'
-  },
-  body: JSON.stringify({
-    name: "IT & Digital Department",
-    weight: 90
-  })
-});
-```
-
-### Response Success (200)
+### Success Response (200)
 ```json
 {
   "status": "success",
@@ -258,38 +293,66 @@ const response = await fetch('/api/divisions/div-123-uuid', {
   "data": {
     "message": "Division updated successfully",
     "division": {
-      "id": "div-123-uuid",
-      "name": "IT & Digital Department",
-      "description": "Divisi Teknologi Informasi dan Digital",
-      "weight": 90,
-      "createdAt": "2024-01-15T08:30:00.000Z",
-      "updatedAt": "2024-01-16T14:20:00.000Z",
+      "id": "div-002",
+      "name": "Digital Marketing",
+      "description": "Online marketing and social media management",
+      "weight": 22.0,
+      "createdAt": "2024-12-01T09:30:00.000Z",
+      "updatedAt": "2024-12-01T11:15:00.000Z",
       "_count": {
-        "employees": 12
+        "employees": 5
       }
     }
   }
 }
 ```
 
----
-
-## 5. DELETE /api/divisions/:id - Hapus Divisi
-
-**Permission**: Admin only  
-**Method**: DELETE
-
-### Contoh Request
-```javascript
-const response = await fetch('/api/divisions/div-123-uuid', {
-  method: 'DELETE',
-  headers: {
-    'Authorization': `Bearer ${token}`
+### Error Response (404)
+```json
+{
+  "status": "error",
+  "code": 404,
+  "errors": {
+    "division": ["Division not found"]
   }
-});
+}
 ```
 
-### Response Success (200)
+### Error Response (422) - Validation Error
+```json
+{
+  "status": "error",
+  "code": 422,
+  "errors": {
+    "name": ["Name must be at least 2 characters"],
+    "weight": ["Weight must be a positive number"]
+  }
+}
+```
+
+### Error Response (422) - Duplicate Name
+```json
+{
+  "status": "error",
+  "code": 422,
+  "errors": {
+    "name": ["Division name already exists"]
+  }
+}
+```
+
+---
+
+## 5. Delete Division
+
+**Endpoint:** `DELETE /api/divisions/:id`  
+**Auth:** Bearer Token Required  
+**Admin:** Yes  
+
+### Path Parameters
+- `id` (string, required): Division ID
+
+### Success Response (200)
 ```json
 {
   "status": "success",
@@ -300,164 +363,115 @@ const response = await fetch('/api/divisions/div-123-uuid', {
 }
 ```
 
-### Response Error (409) - Masih ada karyawan
+### Error Response (404)
+```json
+{
+  "status": "error",
+  "code": 404,
+  "errors": {
+    "division": ["Division not found"]
+  }
+}
+```
+
+### Error Response (409) - Cannot Delete
 ```json
 {
   "status": "error",
   "code": 409,
   "errors": {
-    "division": [
-      "Cannot delete division with existing employees (12 employees). Please reassign or remove employees first."
-    ]
+    "division": ["Cannot delete division with existing employees (5 employees). Please reassign or remove employees first."]
   }
 }
 ```
 
 ---
 
-## Error Responses
+## Query Parameters Details
 
-### 401 Unauthorized - Belum login
-```json
-{
-  "status": "error",
-  "code": 401,
-  "errors": {
-    "auth": ["Authentication required"]
-  }
-}
-```
+### GET /api/divisions
 
-### 403 Forbidden - Bukan admin
-```json
-{
-  "status": "error",
-  "code": 403,
-  "errors": {
-    "auth": ["Admin access required"]
-  }
-}
-```
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `page` | string | "1" | Page number for pagination |
+| `limit` | string | "10" | Number of items per page |
+| `search` | string | "" | Search in division name and description |
+| `includeEmployees` | string | "false" | Include employee details in response |
 
-### 500 Internal Server Error
-```json
-{
-  "status": "error",
-  "code": 500,
-  "errors": {
-    "server": ["Database connection failed"]
-  }
-}
+### Search Examples
+```bash
+# Search for divisions containing "IT"
+GET /api/divisions?search=IT
+
+# Get page 2 with 5 items per page
+GET /api/divisions?page=2&limit=5
+
+# Include employee details
+GET /api/divisions?includeEmployees=true
+
+# Combined query
+GET /api/divisions?search=Marketing&page=1&limit=20&includeEmployees=true
 ```
 
 ---
 
-## React Hook Example
+## Validation Rules
 
-```javascript
-import { useState, useEffect } from 'react';
+### Division Name
+- **Required**: Yes
+- **Minimum**: 2 characters (after trim)
+- **Unique**: Must be unique across all divisions
+- **Trim**: Whitespace removed from start and end
 
-// Custom hook untuk division management
-export const useDivisions = () => {
-  const [divisions, setDivisions] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
+### Description
+- **Required**: No
+- **Nullable**: Yes (can be null or empty)
+- **Trim**: Whitespace removed from start and end
 
-  // Get all divisions
-  const fetchDivisions = async (params = {}) => {
-    setLoading(true);
-    try {
-      const queryString = new URLSearchParams(params).toString();
-      const response = await fetch(`/api/divisions?${queryString}`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      });
-      
-      const data = await response.json();
-      
-      if (data.status === 'success') {
-        setDivisions(data.data.divisions);
-      } else {
-        setError(data.errors);
-      }
-    } catch (err) {
-      setError('Network error');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Create division
-  const createDivision = async (divisionData) => {
-    try {
-      const response = await fetch('/api/divisions', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(divisionData)
-      });
-      
-      const data = await response.json();
-      
-      if (data.status === 'success') {
-        await fetchDivisions(); // Refresh list
-        return { success: true, data: data.data };
-      } else {
-        return { success: false, errors: data.errors };
-      }
-    } catch (err) {
-      return { success: false, errors: { network: ['Connection failed'] } };
-    }
-  };
-
-  return {
-    divisions,
-    loading,
-    error,
-    fetchDivisions,
-    createDivision
-  };
-};
-
-// Usage dalam component
-const DivisionList = () => {
-  const { divisions, loading, error, fetchDivisions } = useDivisions();
-
-  useEffect(() => {
-    fetchDivisions({ 
-      page: 1, 
-      limit: 10, 
-      includeEmployees: true 
-    });
-  }, []);
-
-  if (loading) return <div>Loading...</div>;
-  if (error) return <div>Error: {JSON.stringify(error)}</div>;
-
-  return (
-    <div>
-      {divisions.map(division => (
-        <div key={division.id}>
-          <h3>{division.name}</h3>
-          <p>{division.description}</p>
-          <small>{division._count.employees} karyawan</small>
-        </div>
-      ))}
-    </div>
-  );
-};
-```
+### Weight
+- **Required**: No
+- **Type**: Number
+- **Minimum**: Must be positive (>= 0)
+- **Nullable**: Yes
 
 ---
 
-## Tips untuk Frontend Developer
+## Authentication
 
-1. **Error Handling**: Selalu cek `data.status` untuk menentukan success/error
-2. **Loading State**: Implement loading indicator untuk UX yang baik  
-3. **Pagination**: Gunakan pagination info untuk navigasi halaman
-4. **Search**: Debounce search input untuk mengurangi API calls
-5. **Token Management**: Simpan JWT token di localStorage/sessionStorage
-6. **Admin Check**: Cek role user sebelum menampilkan tombol create/edit/delete
+All endpoints require Bearer Token:
+```
+Authorization: Bearer <your-jwt-token>
+```
+
+## Admin Requirements
+
+Endpoints requiring admin role:
+- `POST /api/divisions` - Create division
+- `PUT /api/divisions/:id` - Update division
+- `DELETE /api/divisions/:id` - Delete division
+
+## Business Rules
+
+1. **Division names must be unique** - No two divisions can have the same name
+2. **Cannot delete divisions with employees** - Must reassign or remove employees first
+3. **Soft validation on weight** - Weight is optional but must be positive if provided
+4. **Search is case-insensitive** - Search works across name and description fields
+
+## Error Codes
+
+- **200** - Success
+- **201** - Created successfully
+- **404** - Division not found
+- **409** - Conflict (cannot delete division with employees)
+- **422** - Validation error
+- **500** - Internal server error
+
+## Response Pagination
+
+The `getAllDivisions` endpoint includes pagination metadata:
+- `currentPage` - Current page number
+- `totalPages` - Total number of pages
+- `totalCount` - Total number of divisions
+- `limit` - Items per page
+- `hasNext` - Boolean indicating if next page exists
+- `hasPrev` - Boolean indicating if previous page exists

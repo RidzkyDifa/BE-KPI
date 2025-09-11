@@ -13,6 +13,7 @@ import kpiRoutes from "./routes/kpiRoutes";
 import assessmentRoutes from "./routes/assessmentRoutes";
 import reportRoutes from "./routes/reportRoutes";
 import notificationRoutes from "./routes/notificationRoutes";
+import userRoutes from "./routes/userRoutes"
 
 // Import notification service
 import { setSocketIO } from "./services/notificationService";
@@ -67,6 +68,7 @@ io.on("connection", (socket) => {
 
 // Routes
 app.use("/api/auth", authRoutes);
+app.use("/api/users", userRoutes)
 app.use("/api/employees", employeeRoutes);
 app.use("/api/divisions", divisionRoutes);
 app.use("/api/positions", positionRoutes);

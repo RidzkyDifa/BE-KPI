@@ -7,7 +7,7 @@ const prisma = new PrismaClient();
 // Ambil semua notifikasi user
 export const getNotifications = async (req: Request, res: Response) => {
   try {
-    const userId = req.user?.id;
+     const userId = (req as any).user.userId;
     const page = parseInt(req.query.page as string) || 1;
     const limit = 10;
     const skip = (page - 1) * limit;
@@ -47,7 +47,7 @@ export const getNotifications = async (req: Request, res: Response) => {
 export const markAsRead = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const userId = req.user?.id;
+     const userId = (req as any).user.userId;
 
     await prisma.notification.updateMany({
       where: { id, userId },
@@ -69,7 +69,7 @@ export const markAsRead = async (req: Request, res: Response) => {
 // Tandai semua sudah dibaca
 export const markAllAsRead = async (req: Request, res: Response) => {
   try {
-    const userId = req.user?.id;
+     const userId = (req as any).user.userId;
 
     await prisma.notification.updateMany({
       where: { userId, isRead: false },
@@ -91,7 +91,7 @@ export const markAllAsRead = async (req: Request, res: Response) => {
 // Ambil jumlah yang belum dibaca
 export const getUnreadCount = async (req: Request, res: Response) => {
   try {
-    const userId = req.user?.id;
+     const userId = (req as any).user.userId;
     
     const count = await prisma.notification.count({
       where: { userId, isRead: false }
@@ -113,7 +113,7 @@ export const getUnreadCount = async (req: Request, res: Response) => {
 export const deleteNotification = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const userId = req.user?.id;
+     const userId = (req as any).user.userId;
 
     await prisma.notification.deleteMany({
       where: { id, userId }
