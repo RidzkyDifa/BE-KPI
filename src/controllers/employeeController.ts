@@ -72,7 +72,6 @@ export const createEmployee = async (req: Request, res: Response) => {
       data: {
         employeeNumber,
         pnosNumber,
-        dateJoined: dateJoined ? new Date(dateJoined) : null,
         positionId: positionId || null, // set ke null jika tidak ada posisi yang dimasukan
         divisionId: divisionId || null, // set ke null jika tidak ada divisi yang dimasukan
       },

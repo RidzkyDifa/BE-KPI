@@ -93,7 +93,7 @@ model Employee {
   id             String        @id @default(uuid())
   employeeNumber String?       @unique  // nomor/ID karyawan perusahaan
   pnosNumber     String?       // nomor PNOS (optional)
-  dateJoined     DateTime?
+  dateJoined     DateTime      @default(now())
   createdAt      DateTime      @default(now())
   updatedAt      DateTime      @updatedAt
   

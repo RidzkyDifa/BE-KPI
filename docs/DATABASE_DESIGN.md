@@ -143,7 +143,7 @@ model Employee {
   id             String        @id @default(uuid())
   employeeNumber String?       @unique  // nomor/ID karyawan perusahaan
   pnosNumber     String?       // nomor PNOS (optional)
-  dateJoined     DateTime?
+  dateJoined     DateTime      @default(now())
   createdAt      DateTime      @default(now())
   updatedAt      DateTime      @updatedAt
   
@@ -163,9 +163,15 @@ model Employee {
 }
 ```
 
+**⚠️ PERUBAHAN PENTING: `dateJoined` sekarang bukan Optional**
+- **Sebelumnya**: `dateJoined DateTime?` (optional)
+- **Sekarang**: `dateJoined DateTime @default(now())`
+- **Dampak**: Setiap employee yang dibuat akan otomatis punya tanggal masuk (defaultnya waktu saat ini)
+- **Benefit**: Data lebih konsisten, tidak ada employee tanpa tanggal masuk
+
 **Berisi data**:
 - Nomor pegawai unik dan nomor PNOS
-- Tanggal masuk kerja
+- Tanggal masuk kerja - otomatis diset ke waktu sekarang jika tidak diberikan
 - Hubungan ke posisi dan divisi
 - Timestamp tracking
 
@@ -213,7 +219,7 @@ model EmployeeKPI {
 }
 ```
 
-**Sistem Perhitungan KPI Baru**:
+**Sistem Perhitungan KPI**:
 - **weight**: Bobot KPI dalam persentase (contoh: 25% = 25.0)
 - **target**: Target yang ditetapkan untuk KPI tersebut
 - **actual**: Pencapaian/realisasi yang sebenarnya
@@ -251,9 +257,9 @@ Perusahaan ingin menilai **karyawan Budi Santoso** untuk periode **Januari 2025*
 - ID: "emp-abc-def-ghi"
 - Nomor Pegawai: "EMP001"
 - Nomor PNOS: "PNOS-2025-01"
+- Tanggal Masuk: 2023-06-15
 - Posisi ID: "pos-111-222-333"
 - Divisi ID: "div-aaa-bbb-ccc"
-- Tanggal Masuk: 2023-06-15
 
 **3. Position (Jabatan)**
 - ID: "pos-111-222-333"
@@ -310,7 +316,7 @@ Email: budi.santoso@company.com
 Nomor Pegawai: EMP001
 Divisi: IT (Divisi Teknologi Informasi)
 Jabatan: Software Engineer
-Bergabung: 15 Juni 2023
+Bergabung: 15 Juni 2023 ⭐ (SELALU ADA TANGGAL)
 Status: Verified ✅
 
 📊 NILAI KPI - JANUARI 2025
@@ -325,7 +331,20 @@ Status: Verified ✅
 
 ## 🔄 Cara Kerja Sistem dengan Perhitungan KPI
 
-### Langkah 1: Input Data KPI
+### Langkah 1: Input Data Employee (PERUBAHAN TERBARU)
+**Sistem otomatis set tanggal masuk jika tidak diberikan**
+```sql
+-- Contoh 1: Insert dengan tanggal masuk eksplisit
+INSERT INTO employees (id, employeeNumber, dateJoined, positionId, divisionId) 
+VALUES ('emp-abc-def-ghi', 'EMP001', '2023-06-15', 'pos-111', 'div-aaa');
+
+-- Contoh 2: Insert tanpa tanggal masuk (otomatis pakai NOW())
+INSERT INTO employees (id, employeeNumber, positionId, divisionId) 
+VALUES ('emp-xyz-123-456', 'EMP002', 'pos-222', 'div-bbb');
+-- ↑ dateJoined akan otomatis diset ke waktu sekarang
+```
+
+### Langkah 2: Input Data KPI
 **Admin/Manager input target dan bobot untuk setiap KPI**
 ```sql
 -- Contoh insert KPI Kehadiran untuk Budi
@@ -342,7 +361,7 @@ INSERT INTO employee_kpis VALUES (
 );
 ```
 
-### Langkah 2: Sistem Menghitung Otomatis
+### Langkah 3: Sistem Menghitung Otomatis
 **Trigger atau aplikasi menghitung score dan achievement**
 ```javascript
 // Pseudocode perhitungan
@@ -357,13 +376,15 @@ function calculateKPI(target, actual, weight) {
 }
 ```
 
-### Langkah 3: Agregasi Laporan
-**Sistem menghitung total performance karyawan**
+### Langkah 4: Agregasi Laporan dengan Tanggal Masuk
+**Sistem menghitung total performance karyawan dengan info lengkap**
 ```sql
--- Query untuk mendapat total achievement per karyawan
+-- Query untuk mendapat total achievement per karyawan + tanggal masuk
 SELECT 
   e.employeeNumber,
   u.name,
+  e.dateJoined,  -- ⭐ SELALU ADA (tidak null lagi)
+  DATEDIFF(CURDATE(), e.dateJoined) as workingDays,
   SUM(ek.achievement) as totalAchievement,
   AVG(ek.score) as averageScore,
   COUNT(ek.id) as totalKPI
@@ -371,16 +392,23 @@ FROM employee_kpis ek
 JOIN employees e ON ek.employeeId = e.id  
 JOIN users u ON e.id = u.employeeId
 WHERE ek.period = '2025-01-31'
-GROUP BY e.id;
+GROUP BY e.id
+ORDER BY e.dateJoined DESC;  -- Urutkan berdasarkan yang paling baru masuk
 ```
 
-## 📊 Keunggulan Sistem Perhitungan Baru
+## 📊 Keunggulan Sistem Perhitungan yang Diperbarui
 
 ### Sistem Perhitungan yang Akurat:
 - **Weight-based calculation**: Setiap KPI punya bobot berbeda sesuai kepentingan
 - **Target vs Actual tracking**: Jelas membedakan target dan pencapaian
 - **Percentage scoring**: Mudah dipahami dalam bentuk persentase
 - **Final achievement**: Nilai akhir yang sudah diperhitungkan bobotnya
+
+### Konsistensi Data yang Diperbaiki:
+- **Tanggal masuk**: Tidak ada lagi employee tanpa tanggal masuk
+- **Default value**: Jika tidak diberikan, otomatis pakai waktu sekarang
+- **Tracking masa kerja**: Mudah menghitung berapa lama karyawan bekerja
+- **Sorting by seniority**: Bisa urutkan berdasarkan senioritas (tanggal masuk)
 
 ### Fleksibilitas Penilaian:
 - KPI bisa punya bobot berbeda (30%, 40%, 30%)
@@ -392,13 +420,15 @@ GROUP BY e.id;
 - Semua komponen perhitungan tersimpan
 - Audit trail untuk setiap perubahan
 - Timestamp tracking untuk histori
+- **Tanggal masuk untuk analisis masa kerja**
 - Relasi yang jelas untuk reporting
 
-### Performa Database:
+### Performa Database yang Dioptimalkan:
 - Multiple indexing untuk query cepat
 - UUID untuk keamanan data
 - Unique constraint untuk data integrity
 - Optimasi relasi untuk join yang efisien
+- **Ordering berdasarkan tanggal masuk untuk UX yang lebih baik**
 
 ## 🎯 Formula Perhitungan KPI
 
@@ -409,10 +439,12 @@ Achievement = (Weight × Score) / 100
 Total KPI Score = Σ(Achievement₁ + Achievement₂ + ... + Achievementₙ)
 ```
 
-### Contoh Implementasi:
+### Contoh Implementasi Backend:
 ```javascript
-// Fungsi untuk menghitung KPI
-function calculateEmployeeKPI(kpiData) {
+// Fungsi untuk menghitung KPI dengan validasi tanggal masuk
+function calculateEmployeeKPI(kpiData, employee) {
+  const workingDays = Math.floor((Date.now() - employee.dateJoined) / (1000 * 60 * 60 * 24));
+  
   let totalAchievement = 0;
   let totalScore = 0;
   
@@ -428,11 +460,85 @@ function calculateEmployeeKPI(kpiData) {
   });
   
   return {
+    employee: {
+      ...employee,
+      workingDays: workingDays, // Masa kerja dalam hari
+      workingMonths: Math.floor(workingDays / 30), // Masa kerja dalam bulan
+    },
     kpiData: kpiData,
     totalAchievement: Math.round(totalAchievement * 100) / 100,
     averageScore: Math.round((totalScore / kpiData.length) * 100) / 100
   };
 }
+```
+
+## 🚀 Perubahan dan Peningkatan Terbaru
+
+### ⭐ **BREAKING CHANGE: `dateJoined` sekarang bukan Optional**
+
+**Sebelumnya:**
+```prisma
+dateJoined DateTime? // optional, bisa null
+```
+
+**Sekarang:**
+```prisma
+dateJoined DateTime @default(now())
+```
+
+**Dampak pada Aplikasi:**
+1. **CREATE Employee**: Tidak perlu wajib kirim `dateJoined`, sistem otomatis set
+2. **UPDATE Employee**: Bisa update tanggal masuk jika diperlukan
+3. **QUERY**: Tidak perlu handle null value untuk `dateJoined`
+4. **SORTING**: Bisa urutkan berdasarkan tanggal masuk (senioritas)
+
+### 🔧 **Perbaikan Controller**
+
+**Validation yang Ditingkatkan:**
+- ✅ Validasi string kosong untuk `employeeNumber` dan `pnosNumber`
+- ✅ Validasi format tanggal untuk `dateJoined`
+- ✅ Trim whitespace untuk menghindari data kotor
+- ✅ Better error messages dengan kode HTTP yang tepat
+
+**Performance Improvement:**
+- ✅ Atomic transaction untuk delete operations
+- ✅ Optimized ordering (tanggal masuk → nama → nomor pegawai)
+- ✅ Better pagination dengan total pages calculation
+
+**Data Consistency:**
+- ✅ Handle empty strings sebagai null
+- ✅ Prevent duplicate employee numbers dengan trim
+- ✅ Consistent response format
+
+## 🎯 API Endpoints (Tidak Berubah)
+
+Routing tidak berubah, tetapi behavior-nya sudah diperbaiki:
+
+```typescript
+router.get("/", authMiddleware, getAllEmployees); 
+// GET /api/employees - Lihat semua karyawan (butuh login)
+// ✨ BARU: Sorting berdasarkan dateJoined DESC
+
+router.get("/:id", authMiddleware, getEmployeeById); 
+// GET /api/employees/:id - Lihat detail karyawan (butuh login)
+
+router.post("/", authMiddleware, requireAdmin, createEmployee); 
+// POST /api/employees - Tambah karyawan baru (hanya ADMIN)
+// ✨ BARU: dateJoined optional (default now()), validasi string kosong
+
+router.put("/:id", authMiddleware, requireAdmin, updateEmployee); 
+// PUT /api/employees/:id - Update karyawan (hanya ADMIN)
+// ✨ BARU: Bisa update dateJoined, validasi yang lebih baik
+
+router.delete("/:id", authMiddleware, requireAdmin, deleteEmployee); 
+// DELETE /api/employees/:id - Hapus karyawan (hanya ADMIN)
+// ✨ BARU: Atomic transaction untuk data safety
+
+router.post("/:id/link-user", authMiddleware, requireAdmin, linkEmployeeToUser); 
+// POST /api/employees/:id/link-user - Link karyawan ke user (hanya ADMIN)
+
+router.post("/:id/unlink-user", authMiddleware, requireAdmin, unlinkEmployeeFromUser); 
+// POST /api/employees/:id/unlink-user - Unlink karyawan dari user (hanya ADMIN)
 ```
 
 ## 🚀 Keunggulan Sistem Lengkap
@@ -442,18 +548,28 @@ function calculateEmployeeKPI(kpiData) {
 - Email verification system
 - Role-based access control
 - Password hashing (dalam implementasi)
+- **Atomic transactions untuk data integrity**
 
 ### Performa:
 - Multiple indexing pada tabel EmployeeKPI
 - Optimasi query dengan relasi yang tepat
 - Cascade delete untuk data integrity
 - Unique constraint untuk mencegah duplikasi
+- **Optimized sorting berdasarkan senioritas**
 
 ### Audit & Tracking:
 - Timestamp pada semua tabel (createdAt, updatedAt)
 - Audit trail untuk perubahan nilai KPI (createdBy, updatedBy)
 - Verification status tracking
+- Tanggal masuk untuk tracking masa kerja
 - Histori lengkap perhitungan KPI
+
+### Data Consistency & Validation:
+- Tanggal masuk tidak bisa kosong
+- Validasi format tanggal yang proper
+- Trim whitespace untuk mencegah data kotor
+- Empty string handling yang konsisten
+- Better error messages dengan HTTP codes yang tepat
 
 ### Fleksibilitas & Skalabilitas:
 - User tidak wajib memiliki data employee (untuk admin)
@@ -461,8 +577,9 @@ function calculateEmployeeKPI(kpiData) {
 - Sistem bobot yang fleksibel per KPI
 - Support overachieve (pencapaian > target)
 - Nama divisi unik untuk konsistensi data
+- **Tanggal masuk otomatis untuk kemudahan input**
 - Sistem master data yang terorganisir
 
 ---
 
-*Database ini dirancang dengan sistem perhitungan KPI yang modern, akurat, dan komprehensif dengan UUID, indexing optimal, audit trail, dan sistem autentikasi yang lengkap untuk perusahaan masa kini.*
+*Database ini dirancang dengan sistem perhitungan KPI yang modern, akurat, dan komprehensif dengan UUID, indexing optimal, audit trail, validasi yang ketat, dan sistem autentikasi yang lengkap untuk perusahaan masa kini. Perubahan terbaru memastikan konsistensi data dengan tanggal masuk yang wajib dan validasi yang lebih baik.*

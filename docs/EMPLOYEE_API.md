@@ -14,15 +14,13 @@
 **Admin:** No  
 
 ### Query Parameters
-```json
-{
-  "page": "string (optional, default: 1)",
-  "limit": "string (optional, default: 10)",
-  "search": "string (optional, default: '')",
-  "divisionId": "string (optional, default: '')",
-  "positionId": "string (optional, default: '')"
-}
-```
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `page` | string | "1" | Page number for pagination |
+| `limit` | string | "10" | Number of items per page |
+| `search` | string | "" | Search in employee number, PNOS number, or user name |
+| `divisionId` | string | "" | Filter by division ID |
+| `positionId` | string | "" | Filter by position ID |
 
 ### Success Response (200)
 ```json
@@ -61,37 +59,6 @@
         "_count": {
           "employeeKpis": 8
         }
-      },
-      {
-        "id": "emp-789",
-        "employeeNumber": "EMP002",
-        "pnosNumber": "PNOS002",
-        "dateJoined": "2023-03-20T00:00:00.000Z",
-        "positionId": "pos-002",
-        "divisionId": "div-002",
-        "createdAt": "2024-12-01T09:30:00.000Z",
-        "updatedAt": "2024-12-01T09:30:00.000Z",
-        "position": {
-          "id": "pos-002",
-          "name": "Marketing Manager",
-          "description": "Lead marketing campaigns and strategies"
-        },
-        "division": {
-          "id": "div-002",
-          "name": "Marketing",
-          "description": "Brand promotion and customer acquisition",
-          "weight": 20.0
-        },
-        "user": {
-          "id": "user-124",
-          "name": "Andi Dea 2",
-          "email": "andi.dea2@company.com",
-          "role": "USER",
-          "verified": true
-        },
-        "_count": {
-          "employeeKpis": 5
-        }
       }
     ],
     "pagination": {
@@ -102,17 +69,6 @@
       "hasNext": true,
       "hasPrev": false
     }
-  }
-}
-```
-
-### Error Response (500)
-```json
-{
-  "status": "error",
-  "code": 500,
-  "errors": {
-    "server": ["Internal server error"]
   }
 }
 ```
@@ -210,12 +166,18 @@
 {
   "employeeNumber": "EMP003",
   "pnosNumber": "PNOS003",
-  "dateJoined": "2023-06-01T00:00:00.000Z",
   "positionId": "pos-003",
   "divisionId": "div-003",
   "userId": "user-125"
 }
 ```
+
+**Field Details:**
+- `employeeNumber`: Optional, must be unique if provided
+- `pnosNumber`: Optional  
+- `positionId`: Optional, must exist in positions table
+- `divisionId`: Optional, must exist in divisions table
+- `userId`: Optional, must exist and not already linked to another employee
 
 ### Success Response (201)
 ```json
@@ -228,7 +190,7 @@
       "id": "emp-890",
       "employeeNumber": "EMP003",
       "pnosNumber": "PNOS003",
-      "dateJoined": "2023-06-01T00:00:00.000Z",
+      "dateJoined": "2024-12-01T11:00:00.000Z",
       "positionId": "pos-003",
       "divisionId": "div-003",
       "createdAt": "2024-12-01T11:00:00.000Z",
@@ -289,6 +251,13 @@
   "divisionId": "div-002"
 }
 ```
+
+**Field Details:**
+- All fields are optional - only provided fields will be updated
+- `employeeNumber`: Must be unique (excluding current employee)
+- `dateJoined`: ISO date format, can be null to remove date
+- `positionId`: Must exist if provided, can be null to remove position
+- `divisionId`: Must exist if provided, can be null to remove division
 
 ### Success Response (200)
 ```json
@@ -451,49 +420,11 @@
 }
 ```
 
-### Error Response (404) - Employee Not Found
-```json
-{
-  "status": "error",
-  "code": 404,
-  "errors": {
-    "employee": ["Employee not found"]
-  }
-}
-```
-
-### Error Response (404) - User Not Found
-```json
-{
-  "status": "error",
-  "code": 404,
-  "errors": {
-    "user": ["User not found"]
-  }
-}
-```
-
-### Error Response (400) - User Already Linked
-```json
-{
-  "status": "error",
-  "code": 400,
-  "errors": {
-    "user": ["User already linked to another employee"]
-  }
-}
-```
-
-### Error Response (400) - Employee Already Linked
-```json
-{
-  "status": "error",
-  "code": 400,
-  "errors": {
-    "employee": ["Employee already linked to a user"]
-  }
-}
-```
+### Error Responses
+- **404** - Employee not found
+- **404** - User not found  
+- **400** - User already linked to another employee
+- **400** - Employee already linked to a user
 
 ---
 
@@ -517,45 +448,16 @@
 }
 ```
 
-### Error Response (404)
-```json
-{
-  "status": "error",
-  "code": 404,
-  "errors": {
-    "employee": ["Employee not found"]
-  }
-}
-```
-
-### Error Response (400)
-```json
-{
-  "status": "error",
-  "code": 400,
-  "errors": {
-    "employee": ["Employee is not linked to any user"]
-  }
-}
-```
+### Error Responses
+- **404** - Employee not found
+- **400** - Employee is not linked to any user
 
 ---
 
-## Query Parameters Details
+## Search & Filter Examples
 
-### GET /api/employees
-
-| Parameter | Type | Default | Description |
-|-----------|------|---------|-------------|
-| `page` | string | "1" | Page number for pagination |
-| `limit` | string | "10" | Number of items per page |
-| `search` | string | "" | Search in employee number, PNOS number, or user name |
-| `divisionId` | string | "" | Filter by division ID |
-| `positionId` | string | "" | Filter by position ID |
-
-### Search Examples
 ```bash
-# Search for employees containing "EMP001"
+# Search employees by name, employee number, or PNOS number
 GET /api/employees?search=EMP001
 
 # Filter by division
@@ -570,33 +472,15 @@ GET /api/employees?search=Andi&divisionId=div-001&page=1&limit=5
 
 ---
 
-## Field Requirements
-
-### Create Employee
-- `employeeNumber`: Optional, must be unique if provided
-- `pnosNumber`: Optional
-- `dateJoined`: Optional, ISO date format
-- `positionId`: Optional, must exist in positions table
-- `divisionId`: Optional, must exist in divisions table
-- `userId`: Optional, must exist and not already linked
-
-### Update Employee
-- All fields are optional
-- Only provided fields will be updated
-- `employeeNumber` must be unique (excluding current employee)
-- `positionId` must exist if provided
-- `divisionId` must exist if provided
-
----
-
 ## Business Rules
 
 1. **Employee Number Uniqueness** - No two employees can have the same employee number
-2. **User Linking** - One user can only be linked to one employee, and vice versa
+2. **User Linking** - One user can only be linked to one employee, and vice versa  
 3. **Position/Division Validation** - Must exist in respective tables if provided
-4. **KPI Protection** - Cannot delete employees with existing KPI records (shows warning)
-5. **Cascade Deletion** - When employee is deleted, user link is automatically removed
+4. **KPI Protection** - Cannot delete employees with existing KPI records
+5. **Auto Unlink** - When employee is deleted, user link is automatically removed
 6. **Search Functionality** - Searches across employee number, PNOS number, and linked user name
+7. **Notification** - Admin receives notification when new employee is created
 
 ---
 
@@ -611,7 +495,7 @@ Authorization: Bearer <your-jwt-token>
 
 Endpoints requiring admin role:
 - `POST /api/employees` - Create employee
-- `PUT /api/employees/:id` - Update employee
+- `PUT /api/employees/:id` - Update employee  
 - `DELETE /api/employees/:id` - Delete employee
 - `POST /api/employees/:id/link-user` - Link employee to user
 - `POST /api/employees/:id/unlink-user` - Unlink employee from user
@@ -625,12 +509,3 @@ Endpoints requiring admin role:
 - **409** - Conflict (cannot delete with KPI records)
 - **422** - Validation error
 - **500** - Internal server error
-
-## Related Data
-
-The employee endpoints return related data:
-- **Position** - Job position details
-- **Division** - Department information with weight
-- **User** - Linked user account information
-- **Employee KPIs** - Performance assessment records (up to 12 months in detail view)
-- **KPI Count** - Number of KPI records (in list view)
