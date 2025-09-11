@@ -1,94 +1,28 @@
-# 👥 Dokumentasi API Employee (Karyawan)
+# Employee API Documentation
 
-Dokumentasi lengkap REST API untuk manajemen data karyawan dalam Sistem KPI.
-
-## 🔐 **Autentikasi Diperlukan**
-
-Semua endpoint memerlukan token autentikasi di header:
-```javascript
-headers: {
-  'Authorization': 'Bearer your-jwt-token',
-  'Content-Type': 'application/json'
-}
+## Base URL
+```
+/api/employees
 ```
 
 ---
 
-## **1. 📋 Ambil Semua Data Karyawan**
+## 1. Get All Employees
 
 **Endpoint:** `GET /api/employees`  
-**Autentikasi:** 🔒 Harus login (USER/ADMIN)
+**Auth:** Bearer Token Required  
+**Admin:** No  
 
-**Parameter Query**
-- `page` (opsional): Nomor halaman, default: 1
-- `limit` (opsional): Jumlah data per halaman, default: 10  
-- `search` (opsional): Cari berdasarkan nama, nomor karyawan, atau PNOS
-- `divisionId` (opsional): Filter berdasarkan ID divisi
-- `positionId` (opsional): Filter berdasarkan ID posisi
+### Query Parameters
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `page` | string | "1" | Page number for pagination |
+| `limit` | string | "10" | Number of items per page |
+| `search` | string | "" | Search in employee number, PNOS number, or user name |
+| `divisionId` | string | "" | Filter by division ID |
+| `positionId` | string | "" | Filter by position ID |
 
-**Contoh Penggunaan Fetch**
-```javascript
-const getAllEmployees = async (page = 1, limit = 10, search = '', filters = {}) => {
-  try {
-    const queryParams = new URLSearchParams({
-      page: page.toString(),
-      limit: limit.toString(),
-      ...(search && { search }),
-      ...(filters.divisionId && { divisionId: filters.divisionId }),
-      ...(filters.positionId && { positionId: filters.positionId })
-    });
-
-    const response = await fetch(`http://localhost:3000/api/employees?${queryParams}`, {
-      method: 'GET',
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        'Content-Type': 'application/json'
-      }
-    });
-    
-    const data = await response.json();
-    
-    if (data.status === 'success') {
-      console.log('Employees loaded:', data.data.employees);
-      return data.data;
-    } else {
-      console.error('Failed to load employees:', data.errors);
-      throw new Error('Failed to fetch employees');
-    }
-  } catch (error) {
-    console.error('Network error:', error);
-    alert('Terjadi kesalahan saat memuat data karyawan.');
-  }
-};
-
-// Contoh penggunaan di React
-const EmployeeList = () => {
-  const [employees, setEmployees] = useState([]);
-  const [pagination, setPagination] = useState({});
-  const [loading, setLoading] = useState(false);
-
-  useEffect(() => {
-    const loadEmployees = async () => {
-      setLoading(true);
-      try {
-        const result = await getAllEmployees(1, 10, searchTerm, { divisionId, positionId });
-        setEmployees(result.employees);
-        setPagination(result.pagination);
-      } catch (error) {
-        console.error('Error loading employees:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadEmployees();
-  }, [searchTerm, divisionId, positionId]);
-};
-```
-
-**Response (Respon)**
-
-**✅ Berhasil (200)**
+### Success Response (200)
 ```json
 {
   "status": "success",
@@ -96,39 +30,41 @@ const EmployeeList = () => {
   "data": {
     "employees": [
       {
-        "id": "emp-uuid-1",
+        "id": "emp-456",
         "employeeNumber": "EMP001",
-        "pnosNumber": "PNOS2024001",
-        "dateJoined": "2020-01-15T00:00:00.000Z",
-        "createdAt": "2024-01-15T10:30:00.000Z",
-        "updatedAt": "2024-01-15T10:30:00.000Z",
+        "pnosNumber": "PNOS001",
+        "dateJoined": "2023-01-15T00:00:00.000Z",
+        "positionId": "pos-001",
+        "divisionId": "div-001",
+        "createdAt": "2024-12-01T10:00:00.000Z",
+        "updatedAt": "2024-12-01T10:00:00.000Z",
         "position": {
-          "id": "pos-uuid-1",
-          "name": "General Manager",
-          "description": "Memimpin operasional perusahaan"
+          "id": "pos-001",
+          "name": "Senior Developer",
+          "description": "Lead software development projects"
         },
         "division": {
-          "id": "div-uuid-1", 
-          "name": "Operations",
-          "description": "Operasional harian dan quality control",
-          "weight": 10
+          "id": "div-001",
+          "name": "IT Development",
+          "description": "Software development and technology solutions",
+          "weight": 25.5
         },
         "user": {
-          "id": "user-uuid-1",
-          "name": "Budi Santoso",
-          "email": "budi.santoso@technocore.co.id",
+          "id": "user-123",
+          "name": "Andi Dea",
+          "email": "andi.dea@company.com",
           "role": "ADMIN",
           "verified": true
         },
         "_count": {
-          "employeeKpis": 24
+          "employeeKpis": 8
         }
       }
     ],
     "pagination": {
       "currentPage": 1,
-      "totalPages": 5,
-      "totalCount": 45,
+      "totalPages": 2,
+      "totalCount": 15,
       "limit": 10,
       "hasNext": true,
       "hasPrev": false
@@ -139,108 +75,65 @@ const EmployeeList = () => {
 
 ---
 
-## **2. 👤 Ambil Data Karyawan Berdasarkan ID**
+## 2. Get Employee by ID
 
 **Endpoint:** `GET /api/employees/:id`  
-**Autentikasi:** 🔒 Harus login (USER/ADMIN)
+**Auth:** Bearer Token Required  
+**Admin:** No  
 
-**Contoh Penggunaan Fetch**
-```javascript
-const getEmployeeById = async (employeeId) => {
-  try {
-    const response = await fetch(`http://localhost:3000/api/employees/${employeeId}`, {
-      method: 'GET',
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        'Content-Type': 'application/json'
-      }
-    });
-    
-    const data = await response.json();
-    
-    if (data.status === 'success') {
-      console.log('Employee detail:', data.data.employee);
-      return data.data.employee;
-    } else {
-      console.error('Employee not found:', data.errors);
-      throw new Error('Employee not found');
-    }
-  } catch (error) {
-    console.error('Network error:', error);
-    alert('Terjadi kesalahan saat memuat detail karyawan.');
-  }
-};
+### Path Parameters
+- `id` (string, required): Employee ID
 
-// Contoh komponen React
-const EmployeeDetail = ({ employeeId }) => {
-  const [employee, setEmployee] = useState(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const loadEmployee = async () => {
-      try {
-        const employeeData = await getEmployeeById(employeeId);
-        setEmployee(employeeData);
-      } catch (error) {
-        console.error('Failed to load employee:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    if (employeeId) {
-      loadEmployee();
-    }
-  }, [employeeId]);
-};
-```
-
-**Response (Respon)**
-
-**✅ Berhasil (200)**
+### Success Response (200)
 ```json
 {
   "status": "success",
   "code": 200,
   "data": {
     "employee": {
-      "id": "emp-uuid-1",
-      "employeeNumber": "EMP015",
-      "pnosNumber": null,
-      "dateJoined": "2023-08-15T00:00:00.000Z",
-      "createdAt": "2024-01-15T10:30:00.000Z",
-      "updatedAt": "2024-01-15T10:30:00.000Z",
+      "id": "emp-456",
+      "employeeNumber": "EMP001",
+      "pnosNumber": "PNOS001",
+      "dateJoined": "2023-01-15T00:00:00.000Z",
+      "positionId": "pos-001",
+      "divisionId": "div-001",
+      "createdAt": "2024-12-01T10:00:00.000Z",
+      "updatedAt": "2024-12-01T10:00:00.000Z",
       "position": {
-        "id": "pos-uuid-2",
-        "name": "Senior Staff",
-        "description": "Staf senior dengan pengalaman 3+ tahun"
+        "id": "pos-001",
+        "name": "Senior Developer",
+        "description": "Lead software development projects"
       },
       "division": {
-        "id": "div-uuid-2",
-        "name": "Information Technology",
-        "description": "Pengembangan sistem dan infrastruktur IT",
-        "weight": 25
+        "id": "div-001",
+        "name": "IT Development",
+        "description": "Software development and technology solutions",
+        "weight": 25.5
       },
       "user": {
-        "id": "user-uuid-2",
-        "name": "Ahmad Rizki",
-        "email": "ahmad.rizki@technocore.co.id",
-        "role": "USER",
+        "id": "user-123",
+        "name": "Andi Dea",
+        "email": "andi.dea@company.com",
+        "role": "ADMIN",
         "verified": true,
-        "createdAt": "2024-01-10T08:00:00.000Z"
+        "createdAt": "2024-11-01T10:00:00.000Z"
       },
       "employeeKpis": [
         {
-          "id": "kpi-uuid-1",
-          "score": 95.0,
-          "period": "2024-08-01T00:00:00.000Z",
-          "createdAt": "2024-09-05T10:30:00.000Z",
-          "updatedAt": "2024-09-05T10:30:00.000Z",
-          "createdBy": "admin-uuid",
-          "updatedBy": null,
+          "id": "assessment-123",
+          "employeeId": "emp-456",
+          "kpiId": "kpi-789",
+          "weight": 25.5,
+          "target": 100.0,
+          "actual": 85.0,
+          "score": 85.0,
+          "achievement": 21.675,
+          "period": "2024-11-01T00:00:00.000Z",
+          "createdAt": "2024-11-01T10:00:00.000Z",
+          "updatedAt": "2024-11-01T10:00:00.000Z",
           "kpi": {
-            "id": "kpi-master-1",
-            "name": "Kehadiran Bulanan"
+            "id": "kpi-789",
+            "name": "Code Quality Score"
           }
         }
       ]
@@ -249,7 +142,7 @@ const EmployeeDetail = ({ employeeId }) => {
 }
 ```
 
-**❌ Tidak Ditemukan (404)**
+### Error Response (404)
 ```json
 {
   "status": "error",
@@ -262,100 +155,31 @@ const EmployeeDetail = ({ employeeId }) => {
 
 ---
 
-## **3. ➕ Buat Karyawan Baru**
+## 3. Create Employee
 
 **Endpoint:** `POST /api/employees`  
-**Autentikasi:** 🔒 Harus Admin
+**Auth:** Bearer Token Required  
+**Admin:** Yes  
 
-**Request Body (Data yang Dikirim)**
+### Request Body
 ```json
 {
-  "employeeNumber": "EMP025",
-  "pnosNumber": "PNOS2024025",
-  "dateJoined": "2024-09-01",
-  "positionId": "position-uuid",
-  "divisionId": "division-uuid",
-  "userId": "user-uuid"
+  "employeeNumber": "EMP003",
+  "pnosNumber": "PNOS003",
+  "positionId": "pos-003",
+  "divisionId": "div-003",
+  "userId": "user-125"
 }
 ```
 
-**Aturan Validasi**
-- `employeeNumber` (opsional): Harus unik jika diisi
-- `pnosNumber` (opsional): Nomor PNOS perusahaan
-- `dateJoined` (opsional): Format tanggal yang valid (YYYY-MM-DD)
-- `positionId` (opsional): Harus ada di tabel posisi
-- `divisionId` (opsional): Harus ada di tabel divisi
-- `userId` (opsional): Harus ada dan belum terhubung ke karyawan lain
+**Field Details:**
+- `employeeNumber`: Optional, must be unique if provided
+- `pnosNumber`: Optional  
+- `positionId`: Optional, must exist in positions table
+- `divisionId`: Optional, must exist in divisions table
+- `userId`: Optional, must exist and not already linked to another employee
 
-**Contoh Penggunaan Fetch**
-```javascript
-const createEmployee = async (employeeData) => {
-  try {
-    const response = await fetch('http://localhost:3000/api/employees', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(employeeData)
-    });
-    
-    const data = await response.json();
-    
-    if (data.status === 'success') {
-      console.log('Employee created successfully:', data.data.employee);
-      alert('Karyawan berhasil dibuat!');
-      return data.data.employee;
-    } else {
-      console.error('Validation errors:', data.errors);
-      handleValidationErrors(data.errors);
-    }
-  } catch (error) {
-    console.error('Network error:', error);
-    alert('Terjadi kesalahan saat membuat karyawan baru.');
-  }
-};
-
-// Contoh form React
-const CreateEmployeeForm = ({ onSuccess }) => {
-  const [formData, setFormData] = useState({
-    employeeNumber: '',
-    pnosNumber: '',
-    dateJoined: '',
-    positionId: '',
-    divisionId: '',
-    userId: ''
-  });
-  const [errors, setErrors] = useState({});
-  const [loading, setLoading] = useState(false);
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setErrors({});
-
-    try {
-      const newEmployee = await createEmployee(formData);
-      if (newEmployee) {
-        onSuccess?.(newEmployee);
-        setFormData({ employeeNumber: '', pnosNumber: '', dateJoined: '', positionId: '', divisionId: '', userId: '' });
-      }
-    } catch (error) {
-      console.error('Failed to create employee:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleValidationErrors = (validationErrors) => {
-    setErrors(validationErrors);
-  };
-};
-```
-
-**Response (Respon)**
-
-**✅ Berhasil (201)**
+### Success Response (201)
 ```json
 {
   "status": "success",
@@ -363,26 +187,28 @@ const CreateEmployeeForm = ({ onSuccess }) => {
   "data": {
     "message": "Employee created successfully",
     "employee": {
-      "id": "new-emp-uuid",
-      "employeeNumber": "EMP025",
-      "pnosNumber": "PNOS2024025",
-      "dateJoined": "2024-09-01T00:00:00.000Z",
-      "createdAt": "2024-09-15T14:20:00.000Z",
-      "updatedAt": "2024-09-15T14:20:00.000Z",
+      "id": "emp-890",
+      "employeeNumber": "EMP003",
+      "pnosNumber": "PNOS003",
+      "dateJoined": "2024-12-01T11:00:00.000Z",
+      "positionId": "pos-003",
+      "divisionId": "div-003",
+      "createdAt": "2024-12-01T11:00:00.000Z",
+      "updatedAt": "2024-12-01T11:00:00.000Z",
       "position": {
-        "id": "pos-uuid",
-        "name": "Staff",
-        "description": "Staf regular pelaksana tugas harian"
+        "id": "pos-003",
+        "name": "HR Specialist",
+        "description": "Handle recruitment and employee relations"
       },
       "division": {
-        "id": "div-uuid",
-        "name": "Sales & Marketing",
-        "description": "Penjualan produk dan strategi pemasaran"
+        "id": "div-003",
+        "name": "Human Resources",
+        "description": "Employee management and organizational development"
       },
       "user": {
-        "id": "user-uuid",
-        "name": "Maya Putri",
-        "email": "maya.putri@technocore.co.id",
+        "id": "user-125",
+        "name": "Andi Dea3",
+        "email": "andi.dea3@company.com",
         "role": "USER"
       }
     }
@@ -390,7 +216,7 @@ const CreateEmployeeForm = ({ onSuccess }) => {
 }
 ```
 
-**❌ Error Validasi (422)**
+### Error Response (422) - Validation Error
 ```json
 {
   "status": "error",
@@ -398,96 +224,42 @@ const CreateEmployeeForm = ({ onSuccess }) => {
   "errors": {
     "employeeNumber": ["Employee number already exists"],
     "positionId": ["Position not found"],
+    "divisionId": ["Division not found"],
     "userId": ["User already linked to another employee"]
-  }
-}
-```
-
-**❌ Tidak Diizinkan (403)**
-```json
-{
-  "status": "error",
-  "code": 403,
-  "errors": {
-    "auth": ["Access denied. Admin role required"]
   }
 }
 ```
 
 ---
 
-## **4. ✏️ Update Data Karyawan**
+## 4. Update Employee
 
 **Endpoint:** `PUT /api/employees/:id`  
-**Autentikasi:** 🔒 Harus Admin
+**Auth:** Bearer Token Required  
+**Admin:** Yes  
 
-**Request Body (Data yang Dikirim)**
+### Path Parameters
+- `id` (string, required): Employee ID
+
+### Request Body
 ```json
 {
-  "employeeNumber": "EMP025-UPDATED",
-  "pnosNumber": "PNOS2024025-NEW",
-  "dateJoined": "2024-09-15",
-  "positionId": "new-position-uuid",
-  "divisionId": "new-division-uuid"
+  "employeeNumber": "EMP003-UPDATED",
+  "pnosNumber": "PNOS003-NEW",
+  "dateJoined": "2023-07-01T00:00:00.000Z",
+  "positionId": "pos-004",
+  "divisionId": "div-002"
 }
 ```
 
-**Contoh Penggunaan Fetch**
-```javascript
-const updateEmployee = async (employeeId, updateData) => {
-  try {
-    const response = await fetch(`http://localhost:3000/api/employees/${employeeId}`, {
-      method: 'PUT',
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(updateData)
-    });
-    
-    const data = await response.json();
-    
-    if (data.status === 'success') {
-      console.log('Employee updated successfully:', data.data.employee);
-      alert('Data karyawan berhasil diperbarui!');
-      return data.data.employee;
-    } else {
-      console.error('Update failed:', data.errors);
-      handleValidationErrors(data.errors);
-    }
-  } catch (error) {
-    console.error('Network error:', error);
-    alert('Terjadi kesalahan saat memperbarui data karyawan.');
-  }
-};
+**Field Details:**
+- All fields are optional - only provided fields will be updated
+- `employeeNumber`: Must be unique (excluding current employee)
+- `dateJoined`: ISO date format, can be null to remove date
+- `positionId`: Must exist if provided, can be null to remove position
+- `divisionId`: Must exist if provided, can be null to remove division
 
-// Contoh form edit React
-const EditEmployeeForm = ({ employee, onSuccess }) => {
-  const [formData, setFormData] = useState({
-    employeeNumber: employee?.employeeNumber || '',
-    pnosNumber: employee?.pnosNumber || '',
-    dateJoined: employee?.dateJoined ? employee.dateJoined.split('T')[0] : '',
-    positionId: employee?.positionId || '',
-    divisionId: employee?.divisionId || ''
-  });
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    try {
-      const updatedEmployee = await updateEmployee(employee.id, formData);
-      if (updatedEmployee) {
-        onSuccess?.(updatedEmployee);
-      }
-    } catch (error) {
-      console.error('Failed to update employee:', error);
-    }
-  };
-};
-```
-
-**Response (Respon)**
-
-**✅ Berhasil (200)**
+### Success Response (200)
 ```json
 {
   "status": "success",
@@ -495,23 +267,28 @@ const EditEmployeeForm = ({ employee, onSuccess }) => {
   "data": {
     "message": "Employee updated successfully",
     "employee": {
-      "id": "emp-uuid",
-      "employeeNumber": "EMP025-UPDATED",
-      "pnosNumber": "PNOS2024025-NEW",
-      "dateJoined": "2024-09-15T00:00:00.000Z",
-      "updatedAt": "2024-09-20T11:15:00.000Z",
+      "id": "emp-890",
+      "employeeNumber": "EMP003-UPDATED",
+      "pnosNumber": "PNOS003-NEW",
+      "dateJoined": "2023-07-01T00:00:00.000Z",
+      "positionId": "pos-004",
+      "divisionId": "div-002",
+      "createdAt": "2024-12-01T11:00:00.000Z",
+      "updatedAt": "2024-12-01T11:30:00.000Z",
       "position": {
-        "id": "new-pos-uuid",
-        "name": "Team Leader"
+        "id": "pos-004",
+        "name": "Junior Developer",
+        "description": "Support software development activities"
       },
       "division": {
-        "id": "new-div-uuid", 
-        "name": "Human Resources & GA"
+        "id": "div-002",
+        "name": "Marketing",
+        "description": "Brand promotion and customer acquisition"
       },
       "user": {
-        "id": "user-uuid",
-        "name": "Maya Putri",
-        "email": "maya.putri@technocore.co.id",
+        "id": "user-125",
+        "name": "Andi Dea3",
+        "email": "andi.dea3@company.com",
         "role": "USER"
       }
     }
@@ -519,83 +296,42 @@ const EditEmployeeForm = ({ employee, onSuccess }) => {
 }
 ```
 
----
-
-## **5. ❌ Hapus Karyawan**
-
-**Endpoint:** `DELETE /api/employees/:id`  
-**Autentikasi:** 🔒 Harus Admin
-
-**Contoh Penggunaan Fetch**
-```javascript
-const deleteEmployee = async (employeeId) => {
-  try {
-    // Konfirmasi penghapusan
-    const confirmDelete = window.confirm(
-      'Apakah Anda yakin ingin menghapus karyawan ini? Semua data KPI akan ikut terhapus dan tidak dapat dikembalikan.'
-    );
-    
-    if (!confirmDelete) return;
-
-    const response = await fetch(`http://localhost:3000/api/employees/${employeeId}`, {
-      method: 'DELETE',
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        'Content-Type': 'application/json'
-      }
-    });
-    
-    const data = await response.json();
-    
-    if (data.status === 'success') {
-      console.log('Employee deleted successfully');
-      alert('Karyawan berhasil dihapus!');
-      return true;
-    } else {
-      console.error('Delete failed:', data.errors);
-      alert(data.errors.employee?.[0] || 'Gagal menghapus karyawan');
-      return false;
-    }
-  } catch (error) {
-    console.error('Network error:', error);
-    alert('Terjadi kesalahan saat menghapus karyawan.');
-    return false;
+### Error Response (404)
+```json
+{
+  "status": "error",
+  "code": 404,
+  "errors": {
+    "employee": ["Employee not found"]
   }
-};
-
-// Contoh komponen React
-const EmployeeDeleteButton = ({ employee, onDeleted }) => {
-  const [loading, setLoading] = useState(false);
-
-  const handleDelete = async () => {
-    setLoading(true);
-    try {
-      const success = await deleteEmployee(employee.id);
-      if (success) {
-        onDeleted?.(employee.id);
-      }
-    } catch (error) {
-      console.error('Failed to delete employee:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  return (
-    <button 
-      onClick={handleDelete} 
-      disabled={loading}
-      className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 disabled:opacity-50"
-    >
-      {loading ? 'Menghapus...' : 'Hapus'}
-    </button>
-  );
-};
+}
 ```
 
-**Response (Respon)**
+### Error Response (422) - Validation Error
+```json
+{
+  "status": "error",
+  "code": 422,
+  "errors": {
+    "employeeNumber": ["Employee number already exists"],
+    "positionId": ["Position not found"],
+    "divisionId": ["Division not found"]
+  }
+}
+```
 
-**✅ Berhasil (200)**
+---
+
+## 5. Delete Employee
+
+**Endpoint:** `DELETE /api/employees/:id`  
+**Auth:** Bearer Token Required  
+**Admin:** Yes  
+
+### Path Parameters
+- `id` (string, required): Employee ID
+
+### Success Response (200)
 ```json
 {
   "status": "success",
@@ -606,90 +342,47 @@ const EmployeeDeleteButton = ({ employee, onDeleted }) => {
 }
 ```
 
-**❌ Memiliki Data KPI (400)**
+### Error Response (404)
 ```json
 {
   "status": "error",
-  "code": 400,
+  "code": 404,
   "errors": {
-    "employee": ["Cannot delete employee with existing KPI records (24 records). All KPI data will be permanently deleted. Use with caution."]
+    "employee": ["Employee not found"]
+  }
+}
+```
+
+### Error Response (409) - Cannot Delete
+```json
+{
+  "status": "error",
+  "code": 409,
+  "errors": {
+    "employee": ["Cannot delete employee with existing KPI records (8 records). All KPI data will be permanently deleted. Use with caution."]
   }
 }
 ```
 
 ---
 
-## **6. 🔗 Hubungkan Karyawan ke User**
+## 6. Link Employee to User
 
 **Endpoint:** `POST /api/employees/:id/link-user`  
-**Autentikasi:** 🔒 Harus Admin
+**Auth:** Bearer Token Required  
+**Admin:** Yes  
 
-**Request Body (Data yang Dikirim)**
+### Path Parameters
+- `id` (string, required): Employee ID
+
+### Request Body
 ```json
 {
-  "userId": "user-uuid-to-link"
+  "userId": "user-126"
 }
 ```
 
-**Contoh Penggunaan Fetch**
-```javascript
-const linkEmployeeToUser = async (employeeId, userId) => {
-  try {
-    const response = await fetch(`http://localhost:3000/api/employees/${employeeId}/link-user`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ userId })
-    });
-    
-    const data = await response.json();
-    
-    if (data.status === 'success') {
-      console.log('Employee linked successfully:', data.data.employee);
-      alert('Karyawan berhasil di-link ke user!');
-      return data.data.employee;
-    } else {
-      console.error('Link failed:', data.errors);
-      alert(Object.values(data.errors)[0]?.[0] || 'Gagal link employee ke user');
-    }
-  } catch (error) {
-    console.error('Network error:', error);
-    alert('Terjadi kesalahan saat link employee ke user.');
-  }
-};
-
-// Contoh komponen React
-const LinkUserModal = ({ employee, users, onSuccess, onClose }) => {
-  const [selectedUserId, setSelectedUserId] = useState('');
-  const [loading, setLoading] = useState(false);
-
-  const availableUsers = users.filter(user => !user.employeeId);
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!selectedUserId) return;
-
-    setLoading(true);
-    try {
-      const linkedEmployee = await linkEmployeeToUser(employee.id, selectedUserId);
-      if (linkedEmployee) {
-        onSuccess?.(linkedEmployee);
-        onClose?.();
-      }
-    } catch (error) {
-      console.error('Failed to link employee:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-};
-```
-
-**Response (Respon)**
-
-**✅ Berhasil (200)**
+### Success Response (200)
 ```json
 {
   "status": "success",
@@ -697,12 +390,28 @@ const LinkUserModal = ({ employee, users, onSuccess, onClose }) => {
   "data": {
     "message": "Employee linked to user successfully",
     "employee": {
-      "id": "emp-uuid",
-      "employeeNumber": "EMP025",
+      "id": "emp-891",
+      "employeeNumber": "EMP004",
+      "pnosNumber": "PNOS004",
+      "dateJoined": "2023-08-10T00:00:00.000Z",
+      "positionId": "pos-002",
+      "divisionId": "div-001",
+      "createdAt": "2024-12-01T10:30:00.000Z",
+      "updatedAt": "2024-12-01T11:45:00.000Z",
+      "position": {
+        "id": "pos-002",
+        "name": "Marketing Manager",
+        "description": "Lead marketing campaigns and strategies"
+      },
+      "division": {
+        "id": "div-001",
+        "name": "IT Development",
+        "description": "Software development and technology solutions"
+      },
       "user": {
-        "id": "user-uuid",
-        "name": "Maya Putri", 
-        "email": "maya.putri@technocore.co.id",
+        "id": "user-126",
+        "name": "Andi Dea 2",
+        "email": "andi.dea2.new@company.com",
         "role": "USER",
         "verified": true
       }
@@ -711,97 +420,24 @@ const LinkUserModal = ({ employee, users, onSuccess, onClose }) => {
 }
 ```
 
-**❌ User Sudah Terhubung (400)**
-```json
-{
-  "status": "error",
-  "code": 400,
-  "errors": {
-    "user": ["User already linked to another employee"]
-  }
-}
-```
+### Error Responses
+- **404** - Employee not found
+- **404** - User not found  
+- **400** - User already linked to another employee
+- **400** - Employee already linked to a user
 
 ---
 
-## **7. 🔓 Putuskan Hubungan Karyawan dari User**
+## 7. Unlink Employee from User
 
 **Endpoint:** `POST /api/employees/:id/unlink-user`  
-**Autentikasi:** 🔒 Harus Admin
+**Auth:** Bearer Token Required  
+**Admin:** Yes  
 
-**Contoh Penggunaan Fetch**
-```javascript
-const unlinkEmployeeFromUser = async (employeeId) => {
-  try {
-    const confirmUnlink = window.confirm(
-      'Apakah Anda yakin ingin unlink employee dari user? User tidak akan bisa login sebagai karyawan ini lagi.'
-    );
-    
-    if (!confirmUnlink) return;
+### Path Parameters
+- `id` (string, required): Employee ID
 
-    const response = await fetch(`http://localhost:3000/api/employees/${employeeId}/unlink-user`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        'Content-Type': 'application/json'
-      }
-    });
-    
-    const data = await response.json();
-    
-    if (data.status === 'success') {
-      console.log('Employee unlinked successfully');
-      alert('Employee berhasil di-unlink dari user!');
-      return true;
-    } else {
-      console.error('Unlink failed:', data.errors);
-      alert(data.errors.employee?.[0] || 'Gagal unlink employee');
-      return false;
-    }
-  } catch (error) {
-    console.error('Network error:', error);
-    alert('Terjadi kesalahan saat unlink employee.');
-    return false;
-  }
-};
-
-// Contoh komponen React
-const UnlinkUserButton = ({ employee, onUnlinked }) => {
-  const [loading, setLoading] = useState(false);
-
-  const handleUnlink = async () => {
-    setLoading(true);
-    try {
-      const success = await unlinkEmployeeFromUser(employee.id);
-      if (success) {
-        onUnlinked?.(employee.id);
-      }
-    } catch (error) {
-      console.error('Failed to unlink employee:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  if (!employee.user) {
-    return <span className="text-gray-500">Not linked to any user</span>;
-  }
-
-  return (
-    <button 
-      onClick={handleUnlink} 
-      disabled={loading}
-      className="bg-orange-500 text-white px-3 py-1 rounded hover:bg-orange-600 disabled:opacity-50"
-    >
-      {loading ? 'Unlinking...' : 'Unlink User'}
-    </button>
-  );
-};
-```
-
-**Response (Respon)**
-
-**✅ Berhasil (200)**
+### Success Response (200)
 ```json
 {
   "status": "success",
@@ -812,125 +448,64 @@ const UnlinkUserButton = ({ employee, onUnlinked }) => {
 }
 ```
 
-**❌ Tidak Terhubung (400)**
-```json
-{
-  "status": "error",
-  "code": 400,
-  "errors": {
-    "employee": ["Employee is not linked to any user"]
-  }
-}
+### Error Responses
+- **404** - Employee not found
+- **400** - Employee is not linked to any user
+
+---
+
+## Search & Filter Examples
+
+```bash
+# Search employees by name, employee number, or PNOS number
+GET /api/employees?search=EMP001
+
+# Filter by division
+GET /api/employees?divisionId=div-001
+
+# Filter by position and division
+GET /api/employees?positionId=pos-001&divisionId=div-001
+
+# Combined query with pagination
+GET /api/employees?search=Andi&divisionId=div-001&page=1&limit=5
 ```
 
 ---
 
-## 🔒 **Response Error yang Sering Muncul**
+## Business Rules
 
-**❌ Tidak Terautentikasi (401)**
-```json
-{
-  "status": "error",
-  "code": 401,
-  "errors": {
-    "auth": ["Unauthorized"]
-  }
-}
-```
-
-**❌ Tidak Diizinkan (403)**
-```json
-{
-  "status": "error",
-  "code": 403,
-  "errors": {
-    "auth": ["Access denied. Admin role required"]
-  }
-}
-```
-
-**❌ Kesalahan Server (500)**
-```json
-{
-  "status": "error",
-  "code": 500,
-  "errors": {
-    "server": ["Internal server error"]
-  }
-}
-```
+1. **Employee Number Uniqueness** - No two employees can have the same employee number
+2. **User Linking** - One user can only be linked to one employee, and vice versa  
+3. **Position/Division Validation** - Must exist in respective tables if provided
+4. **KPI Protection** - Cannot delete employees with existing KPI records
+5. **Auto Unlink** - When employee is deleted, user link is automatically removed
+6. **Search Functionality** - Searches across employee number, PNOS number, and linked user name
+7. **Notification** - Admin receives notification when new employee is created
 
 ---
 
-## 📝 **Interface TypeScript**
+## Authentication
 
-```typescript
-interface Employee {
-  id: string;
-  employeeNumber?: string;
-  pnosNumber?: string;
-  dateJoined?: Date;
-  createdAt: Date;
-  updatedAt: Date;
-  position?: {
-    id: string;
-    name: string;
-    description?: string;
-  };
-  division?: {
-    id: string;
-    name: string;
-    description?: string;
-    weight?: number;
-  };
-  user?: {
-    id: string;
-    name: string;
-    email: string;
-    role: 'USER' | 'ADMIN';
-    verified: boolean;
-  };
-  employeeKpis?: EmployeeKPI[];
-  _count?: {
-    employeeKpis: number;
-  };
-}
-
-interface EmployeeKPI {
-  id: string;
-  score: number;
-  period: Date;
-  createdAt: Date;
-  updatedAt: Date;
-  createdBy?: string;
-  updatedBy?: string;
-  kpi: {
-    id: string;
-    name: string;
-  };
-}
-
-interface PaginationInfo {
-  currentPage: number;
-  totalPages: number;
-  totalCount: number;
-  limit: number;
-  hasNext: boolean;
-  hasPrev: boolean;
-}
+All endpoints require Bearer Token:
+```
+Authorization: Bearer <your-jwt-token>
 ```
 
----
+## Admin Requirements
 
-## 🎯 **Best Practice untuk Frontend**
+Endpoints requiring admin role:
+- `POST /api/employees` - Create employee
+- `PUT /api/employees/:id` - Update employee  
+- `DELETE /api/employees/:id` - Delete employee
+- `POST /api/employees/:id/link-user` - Link employee to user
+- `POST /api/employees/:id/unlink-user` - Unlink employee from user
 
-1. **Selalu handle error autentikasi** - redirect ke login jika 401
-2. **Tampilkan loading state** saat proses API call
-3. **Tampilkan error validasi** dengan jelas ke user
-4. **Konfirmasi aksi yang berbahaya** (hapus, unlink)
-5. **Cache data karyawan** untuk mengurangi API call
-6. **Gunakan pagination** untuk daftar karyawan yang banyak
-7. **Implementasikan search/filter** untuk UX yang lebih baik
-8. **Handle network error** dengan baik
+## Error Codes
 
-**Selamat coding! 🚀**
+- **200** - Success
+- **201** - Created successfully
+- **400** - Bad request (linking conflicts)
+- **404** - Employee/User not found
+- **409** - Conflict (cannot delete with KPI records)
+- **422** - Validation error
+- **500** - Internal server error
