@@ -59,7 +59,7 @@ model Division {
   id          String     @id @default(uuid())
   name        String    @unique
   description String?
-  weight      Int?
+  weight      Int?      // bobot divisi dalam sistem penilaian keseluruhan
   employees   Employee[]
   createdAt   DateTime   @default(now())
   updatedAt   DateTime   @updatedAt
@@ -115,7 +115,7 @@ model Employee {
 // ===== TABEL PENILAIAN KPI =====
 model EmployeeKPI {
   id          String   @id @default(uuid())
-  weight      Float // bobot KPI (%)
+  weight      Float // bobot KPI individual (%)
   target      Float // target yang ditetapkan
   actual      Float // realisasi (pencapaian nyata)
   achievement Float // nilai akhir (weight * score )
