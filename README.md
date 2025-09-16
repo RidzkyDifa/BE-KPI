@@ -110,7 +110,7 @@ npx prisma generate
 
 ### Error: Table 'xxx' doesn't exist
 - Jalankan migration terlebih dahulu: `npx prisma db push`
-- Atau reset database: `npx prisma db reset`
+- Atau reset database (ikuti cara dibawah)
 
 ## Tips
 
