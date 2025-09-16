@@ -116,7 +116,8 @@ npx prisma generate
 
 1. **Reset Database**: Jika ingin menghapus semua data dan seed ulang
    ```bash
-   npx prisma db reset
+   npx prisma migrate reset
+   npx prisma db push
    ```
 
 2. **Custom Seed**: Buat file seed baru (contoh: `seed-custom.ts`) dan update `package.json`
