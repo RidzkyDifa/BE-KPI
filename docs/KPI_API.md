@@ -40,10 +40,21 @@ GET /api/kpis
         "employeeKpis": [
           {
             "id": "emp-kpi-001",
-            "score": 85,
-            "period": "2024-Q1",
+            "weight": 25.0,
+            "target": 100.0,
+            "actual": 85.0,
+            "score": 85.0,
+            "achievement": 21.25,
+            "period": "2024-01-01T00:00:00.000Z",
+            "createdBy": "user-admin-001",
+            "updatedBy": "user-admin-001",
+            "createdAt": "2024-01-15T08:00:00.000Z",
+            "updatedAt": "2024-01-15T08:00:00.000Z",
             "employee": {
               "id": "emp-001",
+              "employeeNumber": "EMP001",
+              "pnosNumber": "PNOS001",
+              "dateJoined": "2023-01-15T08:00:00.000Z",
               "user": {
                 "id": "user-001",
                 "name": "Andi Dea",
@@ -51,7 +62,8 @@ GET /api/kpis
               },
               "division": {
                 "id": "div-001",
-                "name": "Sales"
+                "name": "Sales",
+                "weight": 30
               },
               "position": {
                 "id": "pos-001",
@@ -114,10 +126,21 @@ GET /api/kpis/:id
       "employeeKpis": [
         {
           "id": "emp-kpi-001",
-          "score": 85,
-          "period": "2024-Q1",
+          "weight": 25.0,
+          "target": 100.0,
+          "actual": 85.0,
+          "score": 85.0,
+          "achievement": 21.25,
+          "period": "2024-01-01T00:00:00.000Z",
+          "createdBy": "user-admin-001",
+          "updatedBy": "user-admin-001",
+          "createdAt": "2024-01-15T08:00:00.000Z",
+          "updatedAt": "2024-01-15T08:00:00.000Z",
           "employee": {
             "id": "emp-001",
+            "employeeNumber": "EMP001",
+            "pnosNumber": "PNOS001",
+            "dateJoined": "2023-01-15T08:00:00.000Z",
             "user": {
               "id": "user-001",
               "name": "Andi Dea",
@@ -125,7 +148,8 @@ GET /api/kpis/:id
             },
             "division": {
               "id": "div-001",
-              "name": "Sales"
+              "name": "Sales",
+              "weight": 30
             },
             "position": {
               "id": "pos-001",
@@ -135,10 +159,21 @@ GET /api/kpis/:id
         },
         {
           "id": "emp-kpi-002",
-          "score": 92,
-          "period": "2024-Q2",
+          "weight": 30.0,
+          "target": 150.0,
+          "actual": 138.0,
+          "score": 92.0,
+          "achievement": 27.6,
+          "period": "2024-02-01T00:00:00.000Z",
+          "createdBy": "user-admin-001",
+          "updatedBy": "user-admin-002",
+          "createdAt": "2024-02-15T08:00:00.000Z",
+          "updatedAt": "2024-02-20T10:30:00.000Z",
           "employee": {
             "id": "emp-002",
+            "employeeNumber": "EMP002",
+            "pnosNumber": "PNOS002",
+            "dateJoined": "2023-03-01T08:00:00.000Z",
             "user": {
               "id": "user-002",
               "name": "Andi Dea 2",
@@ -146,7 +181,8 @@ GET /api/kpis/:id
             },
             "division": {
               "id": "div-001",
-              "name": "Sales"
+              "name": "Sales",
+              "weight": 30
             },
             "position": {
               "id": "pos-002",
@@ -352,12 +388,48 @@ DELETE /api/kpis/:id
   "status": "error",
   "code": 400,
   "errors": {
-    "kpi": ["Cannot delete KPI that has assessments associated with it"]
+    "kpi": ["Cannot delete KPI that has employee KPI assessments associated with it"]
   }
 }
 ```
 
 ---
+
+## Employee KPI Data Structure
+
+Based on the updated database schema, each `employeeKpi` object now contains the following fields:
+
+### Core KPI Fields
+- `id` (string): Unique identifier for the employee KPI record
+- `weight` (float): Individual KPI weight as percentage (e.g., 25.0 for 25%)
+- `target` (float): Target value set for this KPI
+- `actual` (float): Actual achievement/realization value
+- `score` (float): KPI score percentage (calculated as `actual / target * 100`)
+- `achievement` (float): Final weighted achievement (calculated as `weight * score / 100`)
+- `period` (DateTime): Assessment period (typically monthly)
+
+### Audit Trail Fields
+- `createdBy` (string): User ID who created this KPI assessment
+- `updatedBy` (string): User ID who last updated this KPI assessment
+- `createdAt` (DateTime): When the record was created
+- `updatedAt` (DateTime): When the record was last updated
+
+### Employee Information
+- `employee.employeeNumber` (string): Company employee number/ID
+- `employee.pnosNumber` (string): PNOS number (optional)
+- `employee.dateJoined` (DateTime): Employee's joining date
+- `employee.division.weight` (int): Division weight in overall assessment system
+
+## Business Logic Notes
+
+### KPI Calculation Formula
+- **Score**: `(actual / target) * 100`
+- **Achievement**: `(weight * score) / 100`
+
+### Data Constraints
+- Each employee can only have one KPI assessment per period (enforced by unique constraint on `employeeId`, `kpiId`, and `period`)
+- KPI weight should typically be expressed as a percentage (e.g., 25.0 for 25%)
+- Period is stored as DateTime but typically represents monthly assessments
 
 ## Common Error Responses
 
@@ -394,9 +466,10 @@ DELETE /api/kpis/:id
 }
 ```
 
-## Notes
+## Additional Notes
 - All timestamps are in ISO 8601 format
-- KPI names must be at least 2 characters long
-- KPI names must be unique
-- KPIs with existing assessments cannot be deleted
+- KPI names must be at least 2 characters long and unique
+- KPIs with existing employee assessments cannot be deleted
 - Employee KPIs are sorted by period (newest first) in single KPI view
+- The system supports audit trail tracking for all KPI assessments
+- Division weights can be used for overall company performance calculations
