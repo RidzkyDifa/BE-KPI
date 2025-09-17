@@ -9,7 +9,7 @@ export const updateUserRole = async (req: Request, res: Response) => {
     const { role } = req.body;
 
     // Validasi role
-    const validRoles = ["ADMIN", "EMPLOYEE"]; // sesuaikan dengan enum di schema.prisma
+    const validRoles = ["ADMIN", "USER"]; // sesuaikan dengan enum di schema.prisma
     if (!role || !validRoles.includes(role)) {
       return res.status(422).json({
         status: "error",
