@@ -112,7 +112,35 @@ export const getEmployeePerformanceReport = async (
           (sum: number, assessment: any) => sum + assessment.score,
           0
         ) / periodData.assessments.length;
+      
+      // Format assessments for period
+      periodData.assessments = periodData.assessments.map((assessment: any) => ({
+        id: assessment.id,
+        weight: assessment.weight,
+        target: assessment.target,
+        actual: assessment.actual,
+        score: assessment.score,
+        achievement: assessment.achievement,
+        period: assessment.period,
+        kpi: assessment.kpi
+      }));
     });
+
+    // Format main assessments
+    const formattedAssessments = assessments.map(assessment => ({
+      id: assessment.id,
+      weight: assessment.weight,
+      target: assessment.target,
+      actual: assessment.actual,
+      score: assessment.score,
+      achievement: assessment.achievement,
+      period: assessment.period,
+      createdBy: assessment.createdBy,
+      updatedBy: assessment.updatedBy,
+      createdAt: assessment.createdAt,
+      updatedAt: assessment.updatedAt,
+      kpi: assessment.kpi
+    }));
 
     res.status(200).json({
       status: "success",
@@ -125,7 +153,7 @@ export const getEmployeePerformanceReport = async (
           averageAchievement: Math.round(averageAchievement * 100) / 100,
           averageScore: Math.round(averageScore * 100) / 100,
         },
-        assessments,
+        assessments: formattedAssessments,
         performanceByPeriod: Object.values(performanceByPeriod),
       },
     });
@@ -272,6 +300,18 @@ export const getDivisionPerformanceReport = async (
         Math.round(employeeData.totalAchievement * 100) / 100;
       employeeData.averageScore =
         Math.round(employeeData.averageScore * 100) / 100;
+      
+      // Format assessments for employee
+      employeeData.assessments = employeeData.assessments.map((assessment: any) => ({
+        id: assessment.id,
+        weight: assessment.weight,
+        target: assessment.target,
+        actual: assessment.actual,
+        score: assessment.score,
+        achievement: assessment.achievement,
+        period: assessment.period,
+        kpi: assessment.kpi
+      }));
     });
 
     const userIds = division.employees
@@ -402,7 +442,39 @@ export const getKPIPerformanceReport = async (req: Request, res: Response) => {
       (a, b) => b.score - a.score
     );
     const bestPerformers = sortedAssessments.slice(0, 5);
-    const worstPerformers = sortedAssessments.slice(-5).reverse();
+    const worstPerformers = sortedAssessments.slice(-5);
+
+    // Format best performers
+    const formattedBestPerformers = bestPerformers.map(assessment => ({
+      id: assessment.id,
+      weight: assessment.weight,
+      target: assessment.target,
+      actual: assessment.actual,
+      score: assessment.score,
+      achievement: assessment.achievement,
+      period: assessment.period,
+      createdBy: assessment.createdBy,
+      updatedBy: assessment.updatedBy,
+      createdAt: assessment.createdAt,
+      updatedAt: assessment.updatedAt,
+      employee: assessment.employee
+    }));
+
+    // Format worst performers
+    const formattedWorstPerformers = worstPerformers.map(assessment => ({
+      id: assessment.id,
+      weight: assessment.weight,
+      target: assessment.target,
+      actual: assessment.actual,
+      score: assessment.score,
+      achievement: assessment.achievement,
+      period: assessment.period,
+      createdBy: assessment.createdBy,
+      updatedBy: assessment.updatedBy,
+      createdAt: assessment.createdAt,
+      updatedAt: assessment.updatedAt,
+      employee: assessment.employee
+    }));
 
     // Group by period for trend analysis
     const performanceByPeriod = assessments.reduce((acc: any, assessment) => {
@@ -433,6 +505,15 @@ export const getKPIPerformanceReport = async (req: Request, res: Response) => {
       periodData.totalAchievement =
         Math.round(periodData.totalAchievement * 100) / 100;
       periodData.averageScore = Math.round(periodData.averageScore * 100) / 100;
+      
+      // Format assessments for period
+      periodData.assessments = periodData.assessments.map((assessment: any) => ({
+        weight: assessment.weight,
+        target: assessment.target,
+        actual: assessment.actual,
+        score: assessment.score,
+        achievement: assessment.achievement
+      }));
     });
 
     res.status(200).json({
@@ -446,8 +527,8 @@ export const getKPIPerformanceReport = async (req: Request, res: Response) => {
           averageAchievement: Math.round(averageAchievement * 100) / 100,
           averageScore: Math.round(averageScore * 100) / 100,
         },
-        bestPerformers,
-        worstPerformers,
+        bestPerformers: formattedBestPerformers,
+        worstPerformers: formattedWorstPerformers,
         performanceByPeriod: Object.values(performanceByPeriod),
       },
     });
@@ -507,6 +588,7 @@ export const getDashboardOverview = async (req: Request, res: Response) => {
           include: {
             user: { select: { name: true } },
             division: true,
+            position: true,
           },
         },
         kpi: true,
@@ -529,10 +611,26 @@ export const getDashboardOverview = async (req: Request, res: Response) => {
           ) / currentAssessments.length
         : 0;
 
-    // Top performers
-    const topPerformers = currentAssessments
+    // Top performers - format with all fields
+    const topPerformersRaw = currentAssessments
       .sort((a, b) => b.score - a.score)
       .slice(0, 5);
+
+    const topPerformers = topPerformersRaw.map(assessment => ({
+      id: assessment.id,
+      weight: assessment.weight,
+      target: assessment.target,
+      actual: assessment.actual,
+      score: assessment.score,
+      achievement: assessment.achievement,
+      period: assessment.period,
+      createdBy: assessment.createdBy,
+      updatedBy: assessment.updatedBy,
+      createdAt: assessment.createdAt,
+      updatedAt: assessment.updatedAt,
+      employee: assessment.employee,
+      kpi: assessment.kpi
+    }));
 
     // Performance by division
     const divisionPerformance = currentAssessments.reduce(
