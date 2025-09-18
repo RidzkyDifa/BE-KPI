@@ -1,10 +1,10 @@
 # Database Sistem KPI Karyawan
 
-Dokumentasi untuk struktur database sistem penilaian kinerja karyawan dengan sistem perhitungan KPI yang komprehensif.
+Dokumentasi untuk struktur database sistem penilaian kinerja karyawan dengan sistem perhitungan KPI yang komprehensif dan sistem notifikasi terintegrasi.
 
 ## 📋 Tentang Sistem
 
-Sistem ini digunakan untuk mengelola penilaian KPI (Key Performance Indicator) karyawan di perusahaan dengan sistem perhitungan yang akurat berdasarkan bobot, target, dan realisasi pencapaian. Sistem dapat mencatat nilai kinerja setiap karyawan berdasarkan periode tertentu dengan fitur autentikasi pengguna yang lengkap.
+Sistem ini digunakan untuk mengelola penilaian KPI (Key Performance Indicator) karyawan di perusahaan dengan sistem perhitungan yang akurat berdasarkan bobot, target, dan realisasi pencapaian. Sistem dapat mencatat nilai kinerja setiap karyawan berdasarkan periode tertentu dengan fitur autentikasi pengguna yang lengkap dan **sistem notifikasi real-time**.
 
 ## 🗄️ Struktur Database
 
@@ -30,7 +30,7 @@ enum Role {
 
 ## 📚 Pengelompokan Tabel
 
-### 🔐 TABEL AUTHENTICATION
+### 🔐 TABEL AUTHENTICATION & NOTIFICATION
 
 #### 1. **User** - Sistem Autentikasi
 Tabel untuk menyimpan akun pengguna dengan sistem autentikasi lengkap.
@@ -54,6 +54,9 @@ model User {
   employee   Employee? @relation(fields: [employeeId], references: [id])
   employeeId String?   @unique
 
+  // 🆕 Relasi ke Notification - sistem notifikasi
+  notifications Notification[]
+
   @@map("users")
 }
 ```
@@ -63,14 +66,76 @@ model User {
 - Role-based access (USER/ADMIN)
 - Email verification dengan token dan expiry
 - UUID sebagai primary key untuk keamanan
+- **🆕 Sistem notifikasi terintegrasi**
 - Timestamp tracking (createdAt, updatedAt)
 
-**Relasi**: 1 User ⇔ 1 Employee (one-to-one optional)  
+**Relasi**: 
+- 1 User ⇔ 1 Employee (one-to-one optional)  
+- **🆕 1 User ⇔ banyak Notifications (one-to-many)**
+
 **Catatan**: Tidak semua user harus memiliki data employee (admin bisa tidak punya data karyawan)
+
+#### 2. **🆕 Notification** - Sistem Notifikasi Real-time
+Tabel baru untuk menyimpan notifikasi untuk setiap user dengan sistem tracking yang lengkap.
+
+```prisma
+model Notification {
+  id        String    @id @default(uuid())
+  title     String    // Judul notifikasi
+  message   String    // Isi pesan
+  isRead    Boolean   @default(false)
+  readAt    DateTime?
+  
+  // Penerima notifikasi
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  createdAt DateTime  @default(now())
+  
+  // Indexing untuk performa optimal
+  @@index([userId])
+  @@index([isRead])
+  @@map("notifications")
+}
+```
+
+**Fitur Utama**:
+- **title & message**: Judul dan isi notifikasi yang fleksibel
+- **isRead tracking**: Status baca/belum baca dengan default false
+- **readAt timestamp**: Kapan notifikasi dibaca (nullable)
+- **Cascade delete**: Notifikasi terhapus otomatis jika user dihapus
+- **Dual indexing**: Optimasi query berdasarkan userId dan status baca
+
+**Contoh Penggunaan Notifikasi**:
+```javascript
+// Notifikasi ketika KPI diinput
+{
+  title: "KPI Penilaian Baru",
+  message: "Penilaian KPI Anda untuk periode Januari 2025 telah diinput oleh Manager",
+  userId: "user-123",
+  isRead: false
+}
+
+// Notifikasi reminder target
+{
+  title: "Reminder Target KPI",
+  message: "Target KPI 'Kehadiran' Anda bulan ini tinggal 5 hari lagi. Tetap semangat!",
+  userId: "user-123",
+  isRead: false
+}
+
+// Notifikasi achievement
+{
+  title: "🎉 Selamat! Target Tercapai",
+  message: "Anda berhasil mencapai 112% dari target Bug Fix bulan ini. Excellent work!",
+  userId: "user-123",
+  isRead: false
+}
+```
 
 ### 🗂️ TABEL MASTER DATA
 
-#### 2. **Division** - Divisi/Bagian
+#### 3. **Division** - Divisi/Bagian
 Master data divisi atau departemen perusahaan.
 
 ```prisma
@@ -78,7 +143,7 @@ model Division {
   id          String     @id @default(uuid())
   name        String    @unique
   description String?
-  weight      Int?
+  weight      Int?      // bobot divisi dalam sistem penilaian keseluruhan
   employees   Employee[]
   createdAt   DateTime   @default(now())
   updatedAt   DateTime   @updatedAt
@@ -94,7 +159,7 @@ model Division {
 - Sistem bobot divisi untuk penilaian
 - UUID primary key, timestamp tracking
 
-#### 3. **Position** - Jabatan/Posisi
+#### 4. **Position** - Jabatan/Posisi
 Master data posisi atau jabatan di perusahaan.
 
 ```prisma
@@ -114,7 +179,7 @@ model Position {
 **Relasi**: 1 Position ⇔ banyak Employees  
 **Fitur**: UUID primary key, timestamp tracking
 
-#### 4. **KPI** - Jenis Indikator Penilaian
+#### 5. **KPI** - Jenis Indikator Penilaian
 Master data jenis-jenis KPI yang digunakan untuk penilaian.
 
 ```prisma
@@ -135,7 +200,7 @@ model KPI {
 
 ### 👥 TABEL DATA KARYAWAN
 
-#### 5. **Employee** - Data Karyawan
+#### 6. **Employee** - Data Karyawan
 Tabel utama yang berisi data karyawan perusahaan.
 
 ```prisma
@@ -163,12 +228,6 @@ model Employee {
 }
 ```
 
-**⚠️ PERUBAHAN PENTING: `dateJoined` sekarang bukan Optional**
-- **Sebelumnya**: `dateJoined DateTime?` (optional)
-- **Sekarang**: `dateJoined DateTime @default(now())`
-- **Dampak**: Setiap employee yang dibuat akan otomatis punya tanggal masuk (defaultnya waktu saat ini)
-- **Benefit**: Data lebih konsisten, tidak ada employee tanpa tanggal masuk
-
 **Berisi data**:
 - Nomor pegawai unik dan nomor PNOS
 - Tanggal masuk kerja - otomatis diset ke waktu sekarang jika tidak diberikan
@@ -183,13 +242,13 @@ model Employee {
 
 ### 📊 TABEL PENILAIAN KPI
 
-#### 6. **EmployeeKPI** - Nilai KPI Karyawan dengan Sistem Perhitungan Lengkap
+#### 7. **EmployeeKPI** - Nilai KPI Karyawan dengan Sistem Perhitungan Lengkap
 Tabel untuk menyimpan nilai KPI setiap karyawan per periode dengan sistem perhitungan yang komprehensif dan audit trail.
 
 ```prisma
 model EmployeeKPI {
   id          String   @id @default(uuid())
-  weight      Float    // bobot KPI (%)
+  weight      Float    // bobot KPI individual (%)
   target      Float    // target yang ditetapkan
   actual      Float    // realisasi (pencapaian nyata)
   achievement Float    // nilai akhir (weight * score )
@@ -220,7 +279,7 @@ model EmployeeKPI {
 ```
 
 **Sistem Perhitungan KPI**:
-- **weight**: Bobot KPI dalam persentase (contoh: 25% = 25.0)
+- **weight**: Bobot KPI individual dalam persentase (contoh: 25% = 25.0)
 - **target**: Target yang ditetapkan untuk KPI tersebut
 - **actual**: Pencapaian/realisasi yang sebenarnya
 - **score**: Persentase pencapaian = (actual / target × 100)
@@ -233,82 +292,133 @@ model EmployeeKPI {
 - Cascade delete jika employee dihapus
 - UUID primary key untuk keamanan
 
-**Relasi**:
-- **EmployeeKPI ⇔ Employee** (many-to-one)
-- **EmployeeKPI ⇔ KPI** (many-to-one)
+## 🆕 Fitur Baru: Sistem Notifikasi
 
-**Constraint penting**: `unique (employeeId, kpiId, period)` → tidak boleh ada duplikat penilaian di periode yang sama
+### Cara Kerja Notification System
 
-## 🎯 Contoh Kasus Nyata dengan Perhitungan KPI
+#### 1. **Auto-notification saat KPI diinput**
+```javascript
+// Ketika admin/manager input nilai KPI
+async function createEmployeeKPI(data) {
+  const newKPI = await prisma.employeeKPI.create({ data });
+  
+  // Auto-create notification untuk karyawan
+  if (newKPI.employee.user) {
+    await prisma.notification.create({
+      data: {
+        title: "KPI Penilaian Baru",
+        message: `Penilaian KPI '${newKPI.kpi.name}' untuk periode ${formatDate(newKPI.period)} telah diinput.`,
+        userId: newKPI.employee.user.id
+      }
+    });
+  }
+  
+  return newKPI;
+}
+```
+
+#### 2. **Notification untuk Achievement Milestones**
+```javascript
+// Notifikasi berdasarkan pencapaian
+function createAchievementNotification(employeeKPI) {
+  let title, message;
+  
+  if (employeeKPI.score >= 100) {
+    title = "🎉 Target Tercapai!";
+    message = `Selamat! Anda mencapai ${employeeKPI.score}% dari target ${employeeKPI.kpi.name}`;
+  } else if (employeeKPI.score >= 80) {
+    title = "👍 Pencapaian Baik";
+    message = `Anda mencapai ${employeeKPI.score}% dari target ${employeeKPI.kpi.name}. Keep it up!`;
+  } else {
+    title = "⚠️ Perlu Peningkatan";
+    message = `Target ${employeeKPI.kpi.name} baru tercapai ${employeeKPI.score}%. Mari tingkatkan!`;
+  }
+  
+  return { title, message };
+}
+```
+
+#### 3. **Real-time Notification Queries**
+```sql
+-- Mendapat notifikasi belum dibaca untuk user
+SELECT id, title, message, createdAt
+FROM notifications 
+WHERE userId = 'user-123' AND isRead = false
+ORDER BY createdAt DESC;
+
+-- Mark notification sebagai dibaca
+UPDATE notifications 
+SET isRead = true, readAt = NOW() 
+WHERE id = 'notification-id';
+
+-- Hitung total unread notifications
+SELECT COUNT(*) as unreadCount
+FROM notifications 
+WHERE userId = 'user-123' AND isRead = false;
+```
+
+### API Endpoints untuk Notification
+
+```typescript
+// GET /api/notifications - Mendapat semua notifikasi user
+router.get("/", authMiddleware, getUserNotifications);
+
+// PUT /api/notifications/:id/read - Mark notification sebagai dibaca
+router.put("/:id/read", authMiddleware, markNotificationAsRead);
+
+// PUT /api/notifications/read-all - Mark semua notifikasi sebagai dibaca
+router.put("/read-all", authMiddleware, markAllNotificationsAsRead);
+
+// GET /api/notifications/unread-count - Hitung notifikasi belum dibaca
+router.get("/unread-count", authMiddleware, getUnreadNotificationCount);
+```
+
+## 🎯 Contoh Kasus Nyata dengan Sistem Notifikasi Terintegrasi
 
 Perusahaan ingin menilai **karyawan Budi Santoso** untuk periode **Januari 2025**. Budi bekerja di **Divisi IT** dengan jabatan **Software Engineer**.
 
 ### Data yang Tersimpan:
 
-**1. User (Akun Login)**
+**1. User (Akun Login dengan Notifikasi)**
 - ID: "user-123-456-789"
 - Name: "Budi Santoso"
 - Email: "budi.santoso@company.com"
 - Role: USER
 - Verified: true
 - Employee ID: "emp-abc-def-ghi"
+- **🆕 Total Notifications**: 3 (2 unread)
 
-**2. Employee (Data Karyawan)**
-- ID: "emp-abc-def-ghi"
-- Nomor Pegawai: "EMP001"
-- Nomor PNOS: "PNOS-2025-01"
-- Tanggal Masuk: 2023-06-15
-- Posisi ID: "pos-111-222-333"
-- Divisi ID: "div-aaa-bbb-ccc"
+**2. Notifications (Sistem Notifikasi)**
+```json
+[
+  {
+    "id": "notif-001",
+    "title": "KPI Penilaian Baru",
+    "message": "Penilaian KPI 'Kehadiran' untuk periode Januari 2025 telah diinput oleh Manager",
+    "isRead": true,
+    "readAt": "2025-01-25T10:30:00Z",
+    "createdAt": "2025-01-25T08:15:00Z"
+  },
+  {
+    "id": "notif-002", 
+    "title": "🎉 Target Tercapai!",
+    "message": "Selamat! Anda mencapai 112% dari target Bug Fix bulan ini. Excellent work!",
+    "isRead": false,
+    "readAt": null,
+    "createdAt": "2025-01-30T16:45:00Z"
+  },
+  {
+    "id": "notif-003",
+    "title": "Reminder: Update Profil",
+    "message": "Jangan lupa lengkapi data profil Anda untuk akurasi penilaian yang lebih baik",
+    "isRead": false, 
+    "readAt": null,
+    "createdAt": "2025-01-31T09:00:00Z"
+  }
+]
+```
 
-**3. Position (Jabatan)**
-- ID: "pos-111-222-333"
-- Nama: "Software Engineer"
-- Deskripsi: "Developer aplikasi internal perusahaan"
-
-**4. Division (Divisi)**
-- ID: "div-aaa-bbb-ccc"
-- Nama: "IT"
-- Deskripsi: "Divisi Teknologi Informasi"
-- Bobot: 3
-
-**5. KPI (Jenis Penilaian)**
-- ID "kpi-001": **Kehadiran**
-- ID "kpi-002": **Kualitas Code Review**
-- ID "kpi-003": **Target Bug Fix**
-
-**6. EmployeeKPI (Nilai KPI Budi di Januari 2025)**
-
-| KPI | Weight (%) | Target | Actual | Score (%) | Achievement |
-|-----|------------|---------|---------|-----------|-------------|
-| Kehadiran | 30.0 | 22 hari | 21 hari | 95.45 | 28.64 |
-| Kualitas Code Review | 40.0 | 50 review | 48 review | 96.00 | 38.40 |
-| Target Bug Fix | 30.0 | 25 bugs | 28 bugs | 112.00 | 33.60 |
-
-### Perhitungan Detail:
-
-#### 1. KPI Kehadiran:
-- **Weight**: 30%
-- **Target**: 22 hari kerja
-- **Actual**: 21 hari hadir
-- **Score**: (21/22) × 100 = 95.45%
-- **Achievement**: 30 × (95.45/100) = 28.64
-
-#### 2. KPI Kualitas Code Review:
-- **Weight**: 40%
-- **Target**: 50 code review
-- **Actual**: 48 code review selesai
-- **Score**: (48/50) × 100 = 96.00%
-- **Achievement**: 40 × (96.00/100) = 38.40
-
-#### 3. KPI Target Bug Fix:
-- **Weight**: 30%
-- **Target**: 25 bug
-- **Actual**: 28 bug fixed
-- **Score**: (28/25) × 100 = 112.00% (overachieve!)
-- **Achievement**: 30 × (112.00/100) = 33.60
-
-### Hasil Laporan KPI:
+### Hasil Laporan KPI dengan Notifikasi:
 ```
 👤 PROFIL KARYAWAN
 Nama: Budi Santoso
@@ -316,8 +426,9 @@ Email: budi.santoso@company.com
 Nomor Pegawai: EMP001
 Divisi: IT (Divisi Teknologi Informasi)
 Jabatan: Software Engineer
-Bergabung: 15 Juni 2023 ⭐ (SELALU ADA TANGGAL)
+Bergabung: 15 Juni 2023
 Status: Verified ✅
+🔔 Notifikasi: 3 total (2 belum dibaca)
 
 📊 NILAI KPI - JANUARI 2025
 • Kehadiran (30%): 95.45% → Achievement: 28.64
@@ -327,259 +438,209 @@ Status: Verified ✅
 📈 TOTAL ACHIEVEMENT: 100.64/100 (EXCEED TARGET! 🎉)
 📊 RATA-RATA SCORE: 101.15%
 📅 Terakhir Update: 2025-01-31
+
+🔔 NOTIFIKASI TERBARU:
+• [BELUM DIBACA] 🎉 Target Tercapai! - 30 Jan 16:45
+• [BELUM DIBACA] Reminder: Update Profil - 31 Jan 09:00
+• [SUDAH DIBACA] KPI Penilaian Baru - 25 Jan 08:15
 ```
 
-## 🔄 Cara Kerja Sistem dengan Perhitungan KPI
+## 🔄 Cara Kerja Sistem dengan Notifikasi Terintegrasi
 
-### Langkah 1: Input Data Employee (PERUBAHAN TERBARU)
-**Sistem otomatis set tanggal masuk jika tidak diberikan**
-```sql
--- Contoh 1: Insert dengan tanggal masuk eksplisit
-INSERT INTO employees (id, employeeNumber, dateJoined, positionId, divisionId) 
-VALUES ('emp-abc-def-ghi', 'EMP001', '2023-06-15', 'pos-111', 'div-aaa');
-
--- Contoh 2: Insert tanpa tanggal masuk (otomatis pakai NOW())
-INSERT INTO employees (id, employeeNumber, positionId, divisionId) 
-VALUES ('emp-xyz-123-456', 'EMP002', 'pos-222', 'div-bbb');
--- ↑ dateJoined akan otomatis diset ke waktu sekarang
-```
-
-### Langkah 2: Input Data KPI
-**Admin/Manager input target dan bobot untuk setiap KPI**
-```sql
--- Contoh insert KPI Kehadiran untuk Budi
-INSERT INTO employee_kpis VALUES (
-  'kpi-emp-001', 
-  30.0,        -- weight (30%)
-  22.0,        -- target (22 hari)
-  21.0,        -- actual (21 hari hadir)
-  28.64,       -- achievement (dihitung: 30 × (21/22))
-  95.45,       -- score (dihitung: 21/22 × 100)
-  '2025-01-31', -- period
-  'emp-abc-def-ghi', -- employeeId
-  'kpi-001'    -- kpiId (Kehadiran)
-);
-```
-
-### Langkah 3: Sistem Menghitung Otomatis
-**Trigger atau aplikasi menghitung score dan achievement**
+### Langkah 1: Input Data KPI + Auto Notification
 ```javascript
-// Pseudocode perhitungan
-function calculateKPI(target, actual, weight) {
-  const score = (actual / target) * 100;
-  const achievement = (weight * score) / 100;
-  
-  return {
-    score: parseFloat(score.toFixed(2)),
-    achievement: parseFloat(achievement.toFixed(2))
-  };
-}
-```
-
-### Langkah 4: Agregasi Laporan dengan Tanggal Masuk
-**Sistem menghitung total performance karyawan dengan info lengkap**
-```sql
--- Query untuk mendapat total achievement per karyawan + tanggal masuk
-SELECT 
-  e.employeeNumber,
-  u.name,
-  e.dateJoined,  -- ⭐ SELALU ADA (tidak null lagi)
-  DATEDIFF(CURDATE(), e.dateJoined) as workingDays,
-  SUM(ek.achievement) as totalAchievement,
-  AVG(ek.score) as averageScore,
-  COUNT(ek.id) as totalKPI
-FROM employee_kpis ek
-JOIN employees e ON ek.employeeId = e.id  
-JOIN users u ON e.id = u.employeeId
-WHERE ek.period = '2025-01-31'
-GROUP BY e.id
-ORDER BY e.dateJoined DESC;  -- Urutkan berdasarkan yang paling baru masuk
-```
-
-## 📊 Keunggulan Sistem Perhitungan yang Diperbarui
-
-### Sistem Perhitungan yang Akurat:
-- **Weight-based calculation**: Setiap KPI punya bobot berbeda sesuai kepentingan
-- **Target vs Actual tracking**: Jelas membedakan target dan pencapaian
-- **Percentage scoring**: Mudah dipahami dalam bentuk persentase
-- **Final achievement**: Nilai akhir yang sudah diperhitungkan bobotnya
-
-### Konsistensi Data yang Diperbaiki:
-- **Tanggal masuk**: Tidak ada lagi employee tanpa tanggal masuk
-- **Default value**: Jika tidak diberikan, otomatis pakai waktu sekarang
-- **Tracking masa kerja**: Mudah menghitung berapa lama karyawan bekerja
-- **Sorting by seniority**: Bisa urutkan berdasarkan senioritas (tanggal masuk)
-
-### Fleksibilitas Penilaian:
-- KPI bisa punya bobot berbeda (30%, 40%, 30%)
-- Target bisa berupa angka apapun (hari, unit, persentase, dll)
-- Pencapaian bisa melebihi target (overachieve)
-- Support decimal untuk perhitungan presisi
-
-### Audit & Tracking yang Lengkap:
-- Semua komponen perhitungan tersimpan
-- Audit trail untuk setiap perubahan
-- Timestamp tracking untuk histori
-- **Tanggal masuk untuk analisis masa kerja**
-- Relasi yang jelas untuk reporting
-
-### Performa Database yang Dioptimalkan:
-- Multiple indexing untuk query cepat
-- UUID untuk keamanan data
-- Unique constraint untuk data integrity
-- Optimasi relasi untuk join yang efisien
-- **Ordering berdasarkan tanggal masuk untuk UX yang lebih baik**
-
-## 🎯 Formula Perhitungan KPI
-
-### Formula Dasar:
-```
-Score (%) = (Actual / Target) × 100
-Achievement = (Weight × Score) / 100
-Total KPI Score = Σ(Achievement₁ + Achievement₂ + ... + Achievementₙ)
-```
-
-### Contoh Implementasi Backend:
-```javascript
-// Fungsi untuk menghitung KPI dengan validasi tanggal masuk
-function calculateEmployeeKPI(kpiData, employee) {
-  const workingDays = Math.floor((Date.now() - employee.dateJoined) / (1000 * 60 * 60 * 24));
-  
-  let totalAchievement = 0;
-  let totalScore = 0;
-  
-  kpiData.forEach(kpi => {
-    const score = (kpi.actual / kpi.target) * 100;
-    const achievement = (kpi.weight * score) / 100;
+// Admin input KPI, sistem otomatis kirim notifikasi
+async function createEmployeeKPIWithNotification(kpiData) {
+  const transaction = await prisma.$transaction(async (tx) => {
+    // 1. Create KPI record
+    const newKPI = await tx.employeeKPI.create({
+      data: kpiData,
+      include: {
+        employee: { include: { user: true } },
+        kpi: true
+      }
+    });
     
-    kpi.score = Math.round(score * 100) / 100; // 2 decimal places
-    kpi.achievement = Math.round(achievement * 100) / 100;
+    // 2. Auto-create notification jika employee punya user account
+    if (newKPI.employee.user) {
+      const { title, message } = createAchievementNotification(newKPI);
+      
+      await tx.notification.create({
+        data: {
+          title: title,
+          message: message,
+          userId: newKPI.employee.user.id
+        }
+      });
+    }
     
-    totalAchievement += kpi.achievement;
-    totalScore += score;
+    return newKPI;
   });
   
-  return {
-    employee: {
-      ...employee,
-      workingDays: workingDays, // Masa kerja dalam hari
-      workingMonths: Math.floor(workingDays / 30), // Masa kerja dalam bulan
-    },
-    kpiData: kpiData,
-    totalAchievement: Math.round(totalAchievement * 100) / 100,
-    averageScore: Math.round((totalScore / kpiData.length) * 100) / 100
-  };
+  return transaction;
 }
 ```
 
-## 🚀 Perubahan dan Peningkatan Terbaru
-
-### ⭐ **BREAKING CHANGE: `dateJoined` sekarang bukan Optional**
-
-**Sebelumnya:**
-```prisma
-dateJoined DateTime? // optional, bisa null
+### Langkah 2: Real-time Notification Fetching
+```javascript
+// Frontend polling atau WebSocket untuk real-time notifications
+const useNotifications = () => {
+  const [notifications, setNotifications] = useState([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+  
+  useEffect(() => {
+    const fetchNotifications = async () => {
+      const response = await fetch('/api/notifications');
+      const data = await response.json();
+      setNotifications(data.notifications);
+      setUnreadCount(data.unreadCount);
+    };
+    
+    // Initial fetch
+    fetchNotifications();
+    
+    // Polling setiap 30 detik untuk update real-time
+    const interval = setInterval(fetchNotifications, 30000);
+    
+    return () => clearInterval(interval);
+  }, []);
+  
+  return { notifications, unreadCount };
+};
 ```
 
-**Sekarang:**
-```prisma
-dateJoined DateTime @default(now())
+### Langkah 3: Mark as Read Functionality
+```javascript
+// Mark notification sebagai dibaca
+const markAsRead = async (notificationId) => {
+  await fetch(`/api/notifications/${notificationId}/read`, {
+    method: 'PUT',
+    headers: { 'Authorization': `Bearer ${token}` }
+  });
+  
+  // Update state
+  setNotifications(prev => 
+    prev.map(notif => 
+      notif.id === notificationId 
+        ? { ...notif, isRead: true, readAt: new Date() }
+        : notif
+    )
+  );
+  setUnreadCount(prev => Math.max(0, prev - 1));
+};
 ```
 
-**Dampak pada Aplikasi:**
-1. **CREATE Employee**: Tidak perlu wajib kirim `dateJoined`, sistem otomatis set
-2. **UPDATE Employee**: Bisa update tanggal masuk jika diperlukan
-3. **QUERY**: Tidak perlu handle null value untuk `dateJoined`
-4. **SORTING**: Bisa urutkan berdasarkan tanggal masuk (senioritas)
+## 🚀 Keunggulan Sistem yang Diperbarui
 
-### 🔧 **Perbaikan Controller**
+### 🆕 Sistem Notifikasi Modern:
+- **Real-time updates**: Notifikasi langsung saat ada perubahan KPI
+- **Achievement tracking**: Otomatis beri selamat saat target tercapai
+- **Status management**: Track read/unread dengan timestamp
+- **Performance optimized**: Indexing ganda untuk query cepat
+- **Auto cleanup**: Cascade delete saat user dihapus
 
-**Validation yang Ditingkatkan:**
-- ✅ Validasi string kosong untuk `employeeNumber` dan `pnosNumber`
-- ✅ Validasi format tanggal untuk `dateJoined`
-- ✅ Trim whitespace untuk menghindari data kotor
-- ✅ Better error messages dengan kode HTTP yang tepat
+### Enhanced User Experience:
+- **Instant feedback**: Karyawan langsung tahu nilai KPI mereka
+- **Motivation system**: Notifikasi pencapaian untuk motivasi
+- **Reminder system**: Pengingat target dan deadline
+- **Unread counter**: Badge notification untuk UI yang lebih baik
 
-**Performance Improvement:**
-- ✅ Atomic transaction untuk delete operations
-- ✅ Optimized ordering (tanggal masuk → nama → nomor pegawai)
-- ✅ Better pagination dengan total pages calculation
+### Data Consistency & Performance:
+- **Atomic transactions**: Semua operasi aman dan konsisten
+- **Dual indexing**: Query notifikasi super cepat
+- **Optimized queries**: Join minimal untuk performa maksimal
+- **Clean data model**: Relasi yang jelas dan maintainable
 
-**Data Consistency:**
-- ✅ Handle empty strings sebagai null
-- ✅ Prevent duplicate employee numbers dengan trim
-- ✅ Consistent response format
+### Security & Audit:
+- **User-specific notifications**: Hanya pemilik yang bisa akses
+- **Cascade delete**: Tidak ada orphaned notifications
+- **Audit trail**: Track kapan notification dibaca
+- **Role-based**: Admin bisa kirim notifikasi ke semua user
 
-## 🎯 API Endpoints (Tidak Berubah)
+## 📊 Database Schema Summary
 
-Routing tidak berubah, tetapi behavior-nya sudah diperbaiki:
-
-```typescript
-router.get("/", authMiddleware, getAllEmployees); 
-// GET /api/employees - Lihat semua karyawan (butuh login)
-// ✨ BARU: Sorting berdasarkan dateJoined DESC
-
-router.get("/:id", authMiddleware, getEmployeeById); 
-// GET /api/employees/:id - Lihat detail karyawan (butuh login)
-
-router.post("/", authMiddleware, requireAdmin, createEmployee); 
-// POST /api/employees - Tambah karyawan baru (hanya ADMIN)
-// ✨ BARU: dateJoined optional (default now()), validasi string kosong
-
-router.put("/:id", authMiddleware, requireAdmin, updateEmployee); 
-// PUT /api/employees/:id - Update karyawan (hanya ADMIN)
-// ✨ BARU: Bisa update dateJoined, validasi yang lebih baik
-
-router.delete("/:id", authMiddleware, requireAdmin, deleteEmployee); 
-// DELETE /api/employees/:id - Hapus karyawan (hanya ADMIN)
-// ✨ BARU: Atomic transaction untuk data safety
-
-router.post("/:id/link-user", authMiddleware, requireAdmin, linkEmployeeToUser); 
-// POST /api/employees/:id/link-user - Link karyawan ke user (hanya ADMIN)
-
-router.post("/:id/unlink-user", authMiddleware, requireAdmin, unlinkEmployeeFromUser); 
-// POST /api/employees/:id/unlink-user - Unlink karyawan dari user (hanya ADMIN)
+```mermaid
+erDiagram
+    User ||--o{ Notification : "receives"
+    User ||--o| Employee : "has profile"
+    Employee }o--|| Division : "belongs to"
+    Employee }o--|| Position : "has"
+    Employee ||--o{ EmployeeKPI : "evaluated by"
+    KPI ||--o{ EmployeeKPI : "measures"
+    
+    User {
+        string id PK
+        string name
+        string email UK
+        string password
+        enum role
+        boolean verified
+        string employeeId FK
+    }
+    
+    Notification {
+        string id PK
+        string title
+        string message
+        boolean isRead
+        datetime readAt
+        string userId FK
+        datetime createdAt
+    }
+    
+    Employee {
+        string id PK
+        string employeeNumber UK
+        string pnosNumber
+        datetime dateJoined
+        string positionId FK
+        string divisionId FK
+    }
+    
+    EmployeeKPI {
+        string id PK
+        float weight
+        float target
+        float actual
+        float achievement
+        float score
+        datetime period
+        string employeeId FK
+        string kpiId FK
+    }
 ```
 
-## 🚀 Keunggulan Sistem Lengkap
+## 🎯 API Routes Summary
 
-### Keamanan:
-- UUID sebagai primary key (tidak mudah ditebak)
-- Email verification system
-- Role-based access control
-- Password hashing (dalam implementasi)
-- **Atomic transactions untuk data integrity**
+### Authentication & User Management
+- `POST /api/auth/register` - Registrasi user baru
+- `POST /api/auth/login` - Login user
+- `POST /api/auth/verify-email` - Verifikasi email
+- `GET /api/auth/me` - Get user profile
 
-### Performa:
-- Multiple indexing pada tabel EmployeeKPI
-- Optimasi query dengan relasi yang tepat
-- Cascade delete untuk data integrity
-- Unique constraint untuk mencegah duplikasi
-- **Optimized sorting berdasarkan senioritas**
+### 🆕 Notification Management
+- `GET /api/notifications` - Get user notifications
+- `PUT /api/notifications/:id/read` - Mark as read
+- `PUT /api/notifications/read-all` - Mark all as read
+- `GET /api/notifications/unread-count` - Get unread count
 
-### Audit & Tracking:
-- Timestamp pada semua tabel (createdAt, updatedAt)
-- Audit trail untuk perubahan nilai KPI (createdBy, updatedBy)
-- Verification status tracking
-- Tanggal masuk untuk tracking masa kerja
-- Histori lengkap perhitungan KPI
+### Employee Management  
+- `GET /api/employees` - List employees
+- `POST /api/employees` - Create employee
+- `PUT /api/employees/:id` - Update employee
+- `DELETE /api/employees/:id` - Delete employee
 
-### Data Consistency & Validation:
-- Tanggal masuk tidak bisa kosong
-- Validasi format tanggal yang proper
-- Trim whitespace untuk mencegah data kotor
-- Empty string handling yang konsisten
-- Better error messages dengan HTTP codes yang tepat
+### KPI Management
+- `GET /api/employee-kpis` - List KPI values
+- `POST /api/employee-kpis` - Create KPI (+ auto notification)
+- `PUT /api/employee-kpis/:id` - Update KPI (+ notification)
+- `GET /api/employee-kpis/report/:employeeId` - KPI Report
 
-### Fleksibilitas & Skalabilitas:
-- User tidak wajib memiliki data employee (untuk admin)
-- Employee tidak wajib memiliki user account
-- Sistem bobot yang fleksibel per KPI
-- Support overachieve (pencapaian > target)
-- Nama divisi unik untuk konsistensi data
-- **Tanggal masuk otomatis untuk kemudahan input**
-- Sistem master data yang terorganisir
+### Master Data
+- `GET /api/divisions` - List divisions
+- `GET /api/positions` - List positions  
+- `GET /api/kpis` - List KPI types
 
 ---
 
-*Database ini dirancang dengan sistem perhitungan KPI yang modern, akurat, dan komprehensif dengan UUID, indexing optimal, audit trail, validasi yang ketat, dan sistem autentikasi yang lengkap untuk perusahaan masa kini. Perubahan terbaru memastikan konsistensi data dengan tanggal masuk yang wajib dan validasi yang lebih baik.*
+*Database ini sekarang dilengkapi dengan sistem notifikasi real-time yang modern dan terintegrasi. Karyawan akan mendapat update langsung tentang penilaian KPI mereka, pencapaian target, dan reminder penting. Sistem notification ini dioptimalkan untuk performa tinggi dengan indexing ganda dan support untuk real-time updates via polling atau WebSocket.*
